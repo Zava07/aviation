@@ -1,0 +1,168 @@
+
+modele_avion :
+    -id_modele_avion
+    -nom_modele
+
+etat_avion : {En service, maintenance, immobilise}
+    -id_etat_avion
+    -etat
+
+avion :
+    -id_avion 
+    -id_modele_avion 
+    -capacite_passagers
+    -capacite_cargo 
+    -id_etat_avion
+    -point_vol
+
+histo_etat_avion:
+    -id_histo_etat_avion
+    -date_debut
+    -date_fin
+    -id_etat_avion
+    -id_avion
+
+aeroport :
+    -id_aeroport
+    -nom_aeroport
+
+status_vol :
+    -id_status_vol
+    -status
+
+vol :
+    -id_vol 
+    -numero_vol
+    -id_avion
+    -date_depart
+    -date_arrivee
+    -id_status_vol
+    -id_aeroport_origine
+    -id_aeroport_destination
+    -duree_prevue
+    -duree_reelle
+
+
+type_membre: {PILOTE, COPILOTE, HOTESSE, STEWARD}
+    -id_type_membre
+    -type
+
+membre_equipe:
+    -id_membre
+    -nom
+    -prenom, 
+    -id_type_membre
+    -qualifications
+    -heures_vol
+
+
+vol_equipe:
+    -id_vol 
+    -id_membre
+    -role
+
+
+type_passager : {Individuel , Entreprise}
+    -id_type_passager
+    -type
+
+passager:
+    -id_passager
+    -nom
+    -prenom
+    -id_type_passager
+    -fidelite {Point de fidelite}
+
+statut_reservation: {Confirmer, annule , En attente}
+    -id_status_reservation
+    -nom_status
+
+reservation :
+    -id_reservation
+    -id_passager
+    -id_vol
+    -date_reservation
+    -id_status_reservation
+
+histo_reservation
+    -id_histo_reservation
+    -date
+    -id_status_reservation
+    -id_reservation
+
+
+classe : {Economie, Business, Premiere}
+    -id_classe
+    -nom_classe
+    -niveau
+
+prix_vol_classe :
+    -id_prix
+    -id_vol
+    -id_classe
+    -prix
+    
+siege:
+    -id_siege
+    -id_avion
+    -numero
+    -id_classe
+
+
+status_siege_vol : {Libre, Reserve, Occupe, Bloque}
+    -id_status_siege_vol
+    -status
+
+siege_vol:
+    -id_vol
+    -id_siege
+    -id_status_siege_vol
+    -id_passager
+
+
+status_bille : {EMIS, ANNULE, UTILISE, REMBOURSE}
+    -id_status_billet
+    -status
+
+billet:
+    -id_billet
+    -id_reservation
+    -id_siege
+    -numero_billet
+    -date_emission
+    -id_status_billet
+
+
+devise : 
+    -id_devise
+    -nom_devise
+    -valeur_mga
+
+methode_payement: {Carte, Mobile_money, Espece}
+    -id_methode_payement
+    -nom_methode
+
+status_payement : {en_attente, valide, echoue, rembourse}
+    -id_status_payement
+    -status
+
+paiement :
+    -id_paiement
+    -id_reservation
+    -montant
+    -id_devise
+    -methode
+    -id_status_payement
+    -date_paiement
+
+
+type_bagage: {Main, Souterain, Cargo}
+    -id_type_bagage
+    -type
+
+
+bagage :
+    -id_bagage
+    -id_passager
+    -poids
+    -id_type

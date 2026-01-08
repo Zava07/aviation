@@ -1,0 +1,219 @@
+
+=================================================
+FONCTIONNALITÉS – GESTION DE COMPAGNIE AÉRIENNE
+=================================================
+
+-------------------------------------------------
+1) GESTION DES VOLS
+-------------------------------------------------
+
+Fonctionnalités :
+- CRUD Vol (Créer, Lire, Modifier, Supprimer logique)
+- Rechercher un vol par :
+  * date
+  * destination
+  * statut
+- Changer le statut du vol
+
+Logique métier :
+- Un vol = avion + équipage + itinéraire + horaire
+- Un vol peut être :
+  * Programmé
+  * Retardé
+  * Annulé
+  * Dérouté
+- Chaque vol possède :
+  * un numéro unique (ex : AF123)
+  * un statut (On Time, Delay, Cancelled, Boarding, Closed)
+  * une durée prévue
+  * une durée réelle
+
+Règles métier :
+- Un avion ne peut pas être affecté à deux vols sur la même période
+- Un équipage a une limite d’heures de travail
+- Les créneaux aéroportuaires (slots) doivent être respectés
+
+
+-------------------------------------------------
+2) GESTION DES AVIONS
+-------------------------------------------------
+
+Fonctionnalités :
+- CRUD Avion
+- Gérer l’état de l’avion
+- Affecter un avion à un vol
+
+Logique métier :
+- Chaque avion possède :
+  * un modèle (A320, B737, etc.)
+  * une capacité passagers
+  * une capacité cargo
+  * un état (en service, maintenance, immobilisé)
+
+Règles métier :
+- Un avion en maintenance ne peut pas être planifié pour un vol
+- La configuration cabine peut varier :
+  * Classe Économique
+  * Classe Business
+  * Première Classe
+
+
+-------------------------------------------------
+3) GESTION DES ÉQUIPAGES
+-------------------------------------------------
+
+Fonctionnalités :
+- CRUD membre d’équipage
+- Affecter un équipage à un vol
+- Consulter le planning des équipages
+
+Logique métier :
+- Types de membres :
+  * Pilote
+  * Copilote
+  * Hôtesse / Steward
+- Chaque membre possède :
+  * qualifications avion
+  * nombre d’heures de vol
+
+Règles métier :
+- Temps de repos obligatoire entre deux vols
+- Un équipage incomplet rend le vol impossible
+
+
+-------------------------------------------------
+4) GESTION DES PASSAGERS & RÉSERVATIONS
+-------------------------------------------------
+
+Fonctionnalités :
+- Type de passager :
+  * Personne physique
+  * Entreprise
+- CRUD Passager
+- Gestion de la fidélité passager
+- Consulter l’historique des vols d’un passager
+- Rechercher un passager
+- CRUD Réservation
+  * Annulation autorisée
+  * Suppression interdite
+- Vérifier la disponibilité des sièges
+
+Logique métier :
+- Réservation = passager + vol + siège + tarif
+- Billet électronique (e-ticket)
+- Classes tarifaires :
+  * Économie
+  * Business
+  * Première Classe
+
+Règles métier :
+- Un siège ne peut être vendu qu’une seule fois
+- Le tarif varie selon :
+  * la date
+  * le taux de remplissage
+  * la classe
+- Surbooking autorisé selon règles définies
+
+
+-------------------------------------------------
+5) GESTION DES BILLETS
+-------------------------------------------------
+
+Fonctionnalités :
+- CRUD Billet
+
+Logique métier :
+- Un billet est lié à :
+  * un passager
+  * un vol
+  * un siège
+- Le billet est généré après validation du paiement
+- Le billet contient :
+  * numéro unique
+  * informations vol
+  * informations passager
+  * QR code / code barre
+
+Règles métier :
+- Un billet annulé libère automatiquement le siège
+- Un billet ne peut pas être transféré
+
+
+-------------------------------------------------
+6) GESTION DES SIÈGES
+-------------------------------------------------
+
+Fonctionnalités :
+- CRUD Siège
+- Définition de la classe :
+  * Économie
+  * Business
+  * Première Classe
+- Gestion des disponibilités
+- Affectation d’un siège à un passager
+
+Logique métier :
+- Un siège appartient à un avion
+- Un siège est utilisé différemment selon les vols
+
+États d’un siège :
+- Libre
+- Réservé
+- Occupé
+- Bloqué (maintenance)
+
+Règles métier :
+- La classe du siège doit correspondre à la classe du billet
+- Un siège ne peut être affecté qu’à un seul passager par vol
+
+
+-------------------------------------------------
+7) GESTION DES PAIEMENTS
+-------------------------------------------------
+
+Fonctionnalités :
+- CRUD Paiement
+
+Logique métier :
+- Un paiement valide une réservation
+- Moyens de paiement :
+  * Carte bancaire
+  * Mobile money
+  * Virement
+
+Statuts de paiement :
+- En attente
+- Validé
+- Échoué
+- Remboursé
+
+Règles métier :
+- Paiement validé → billets émis
+- Paiement échoué → réservation annulée
+- Remboursement → billet annulé
+
+
+-------------------------------------------------
+8) GESTION DES BAGAGES & CARGO
+-------------------------------------------------
+
+Fonctionnalités :
+- Enregistrement des bagages
+- Suivi des bagages
+- Gestion du cargo
+
+Logique métier :
+- Chaque bagage est lié à un passager
+- Un bagage possède :
+  * un poids
+  * un statut (chargé, perdu, livré)
+
+Règles métier :
+- Le poids total des bagages est limité par avion
+- Excédent de poids = frais supplémentaires
+- La traçabilité des bagages est obligatoire
+
+
+=================================================
+FIN DU DOCUMENT
+=================================================

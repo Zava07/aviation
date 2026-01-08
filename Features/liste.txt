@@ -1,0 +1,98 @@
+Fonctionnalites Gestion de Compagnie Aerienne
+
+1) Gestion des vols
+. CRUD vol
+. Rechercher un vol (date, destination, statut)
+. Changer le statut du vol
+
+    ---Logique métier
+    Un vol = avion + équipage + itinéraire + horaire
+    Un vol peut être :
+        -programmé
+        -retardé
+        -annulé
+        -dérouté
+    Chaque vol a :
+        -un numéro unique (ex : AF123)
+        -un statut (On time, Delay, Cancelled, Boarding, Closed)
+        -une durée prévue / réelle
+
+    Règles métier
+        -Un avion ne peut pas être affecté à deux vols au même moment
+        -Un équipage a des heures de travail maximales
+        -Les créneaux aéroportuaires (slots) doivent être respectés
+
+2) Gestion des avions
+· CRUD avion
+. Gérer l'état de l'avion
+. Affecter un avion à un vol
+    ---Logique métier
+    Chaque avion a :
+        -un modèle (A320, B737…)
+        -une capacité (passagers / cargo)
+        -un état (en service, maintenance, immobilisé)
+    Règles métier : 
+        -Un avion en maintenance ne peut pas être planifié
+        -La configuration cabine peut varier (eco / business / first)
+
+3) Gestion des equipages
+· CRUD membre d'equipage
+. Affecter équipage à un vol
+· Consulter planning
+
+    --Logique métier
+    Types d’équipage :
+        -pilotes
+        -copilotes
+        -hôtesses / stewards
+    Chaque membre a :
+        -qualifications avion
+        -heures de vol
+
+    Règles métier :
+        -Temps de repos obligatoire entre deux vols
+        -Un équipage incomplet ⇒ vol impossible
+
+4) Gestion des passagers et reservation 
+.Type Passager {personne ou entreprise} ??
+· CRUD passager {Fidelite des passager}
+. Consulter historique des vols (?)
+· Rechercher passager
+· CRUD reservation (annulation mais pas suppression)
+. Vérifier disponibilité
+    ---Logique métier : 
+        Réservation = passager + vol + siège + tarif
+        Billet électronique (e-ticket)
+        Classes tarifaires (Economie, Business…)
+
+    Règles métier :
+        Un siège ne peut être vendu qu’une seule fois
+        Les tarifs varient selon :
+        la date
+        le taux de remplissage
+        la classe
+        Surbooking possible selon règles
+
+
+5) Gestion des billets
+· CRUD billet
+
+6) Gestion des sieges
+· CRUD sieges (classe : premiere classe, classe eco, etc .. )
+· Gerer disponibilites
+· Affectation siege a un passager
+
+7) Gestion des paiements
+. CRUD paiement
+
+
+8) Gestion des bagages & cargo
+Logique métier :
+    Chaque bagage :
+        -est lié à un passager :
+            .a un poids
+            .a un statut (chargé, perdu, livré)
+Règles métier :
+    -Poids total avion limité
+    -Excédent = frais supplémentaires
+    -Traçabilité bagage obligatoire
