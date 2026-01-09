@@ -50,7 +50,7 @@
                     <input type="hidden" name="departId" value="${param.departId}" />
                     <input type="hidden" name="destId" value="${param.destId}" />
                     <select name="volId" onchange="this.form.submit()" class="form-control">
-                        <c:forEach var="v" items="${vols}">
+                        <c:forEach var="v" items="${volsInstances}">
                             <option value="${v.id}" ${selectedVol != null && selectedVol.id == v.id ? 'selected' : ''}>${v.numeroVol} - ${v.dateDepart}</option>
                         </c:forEach>
                     </select>
@@ -93,6 +93,16 @@
                                 <option value="">-- Choisir --</option>
                                 <c:forEach var="t" items="${types}">
                                     <option value="${t.id}">${t.type}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Statut de la réservation</label>
+                            <select name="statutReservation.id" class="form-control">
+                                <option value="">-- Choisir --</option>
+                                <c:forEach var="s" items="${statusList}">
+                                    <option value="${s.id}">${s.nomStatus}</option>
                                 </c:forEach>
                             </select>
                         </div>

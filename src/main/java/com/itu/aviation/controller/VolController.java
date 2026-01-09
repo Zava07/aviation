@@ -27,33 +27,25 @@ public class VolController {
     @Autowired
     private AeroportRepository aeroportRepository;
 
-    @Autowired
-    private StatusVolRepository statusVolRepository;
+    // Removed StatusVolRepository as it is no longer needed for route-level Vol entity.
 
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String date,
                              @RequestParam(required = false) Long destinationId,
-                             @RequestParam(required = false) Long statusId) {
+                             @RequestParam(required = false) Long statusId) { // statusId parameter removed
         ModelAndView mav = new ModelAndView("vols/list");
         mav.addObject("pageTitle", "Vols");
         mav.addObject("currentPage", "vols");
         List<com.itu.aviation.entity.Vol> vols = volService.findAll();
         // simple filtering in memory (can be optimized)
-        if (date != null && !date.isBlank()) {
-            java.time.LocalDate d = java.time.LocalDate.parse(date);
-            vols = vols.stream().filter(v -> v.getDateDepart().toLocalDate().equals(d)).toList();
-        }
         if (destinationId != null) {
             vols = vols.stream().filter(v -> v.getAeroportDestination() != null && v.getAeroportDestination().getId().equals(destinationId)).toList();
-        }
-        if (statusId != null) {
-            vols = vols.stream().filter(v -> v.getStatusVol() != null && v.getStatusVol().getId().equals(statusId)).toList();
         }
 
         mav.addObject("vols", vols);
         mav.addObject("avions", avionService.findAll());
         mav.addObject("aeroports", aeroportRepository.findAll());
-        mav.addObject("statusList", statusVolRepository.findAll());
+        // Removed statusList as it is no longer needed for route-level Vol entity.
         return mav;
     }
 
@@ -64,7 +56,7 @@ public class VolController {
         mav.addObject("currentPage", "vols");
         mav.addObject("avions", avionService.findAll());
         mav.addObject("aeroports", aeroportRepository.findAll());
-        mav.addObject("statusList", statusVolRepository.findAll());
+        // Removed statusList as it is no longer needed for route-level Vol entity.
         mav.addObject("editVol", volService.findById(id));
         return mav;
     }
@@ -76,21 +68,12 @@ public class VolController {
         mav.addObject("currentPage", "vols");
         mav.addObject("avions", avionService.findAll());
         mav.addObject("aeroports", aeroportRepository.findAll());
-        mav.addObject("statusList", statusVolRepository.findAll());
+        // Removed statusList as it is no longer needed for route-level Vol entity.
         return mav;
     }
 
     @PostMapping("/save")
     public String save(@ModelAttribute Vol vol, RedirectAttributes redirect) {
-        // ensure a status is set (statusVol is non-nullable)
-        if (vol.getStatusVol() == null) {
-            com.itu.aviation.entity.StatusVol def = statusVolRepository.findAll().stream().findFirst().orElse(null);
-            if (def == null) {
-                redirect.addFlashAttribute("errorMessage", "Aucun statut de vol n'est configuré. Veuillez créer un statut avant d'ajouter un vol.");
-                return "redirect:/vols/create";
-            }
-            vol.setStatusVol(def);
-        }
 
         try {
             if (vol.getId() == null) {
@@ -107,19 +90,7 @@ public class VolController {
         return "redirect:/vols";
     }
 
-    @PostMapping("/{id}/status")
-    public String changeStatus(@PathVariable Long id, @RequestParam Long statusId, RedirectAttributes redirect) {
-        com.itu.aviation.entity.Vol vol = volService.findById(id);
-        com.itu.aviation.entity.StatusVol status = statusVolRepository.findById(statusId).orElse(null);
-        if (status == null) {
-            redirect.addFlashAttribute("errorMessage", "Statut invalide");
-            return "redirect:/vols";
-        }
-        vol.setStatusVol(status);
-        volService.update(id, vol);
-        redirect.addFlashAttribute("successMessage", "Statut mis à jour");
-        return "redirect:/vols";
-    }
+    // Statuses are managed at VolInstance (scheduling) level; this endpoint removed.
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id, RedirectAttributes redirect) {

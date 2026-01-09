@@ -16,6 +16,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,11 +42,34 @@ public class AvionController {
     private SiegeService siegeService;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) String codeAvion,
+                             @RequestParam(required = false) Long modeleId,
+                             @RequestParam(required = false) Integer minCap,
+                             @RequestParam(required = false) Integer maxCap,
+                             @RequestParam(required = false) Long etatId) {
         ModelAndView mav = new ModelAndView("avions/list");
         mav.addObject("pageTitle", "Avions");
         mav.addObject("currentPage", "avions");
-        mav.addObject("avions", avionService.findAll());
+        List<com.itu.aviation.entity.Avion> all = avionService.findAll();
+        List<com.itu.aviation.entity.Avion> filtered = all.stream().filter(a -> {
+            if (codeAvion != null && !codeAvion.isBlank()) {
+                if (a.getCodeAvion() == null || !a.getCodeAvion().toLowerCase().contains(codeAvion.toLowerCase())) return false;
+            }
+            if (modeleId != null) {
+                if (a.getModeleAvion() == null || !modeleId.equals(a.getModeleAvion().getId())) return false;
+            }
+            if (minCap != null) {
+                if (a.getCapacitePassagers() == null || a.getCapacitePassagers() < minCap) return false;
+            }
+            if (maxCap != null) {
+                if (a.getCapacitePassagers() == null || a.getCapacitePassagers() > maxCap) return false;
+            }
+            if (etatId != null) {
+                if (a.getEtatAvion() == null || !etatId.equals(a.getEtatAvion().getId())) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("avions", filtered);
         mav.addObject("modeles", modeleAvionRepository.findAll());
         mav.addObject("etats", etatAvionRepository.findAll());
         return mav;

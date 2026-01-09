@@ -9,6 +9,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/sieges")
@@ -24,11 +27,28 @@ public class SiegeController {
     private ClasseService classeService;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) String numero,
+                             @RequestParam(required = false) Long avionId,
+                             @RequestParam(required = false) Long classeId) {
         ModelAndView mav = new ModelAndView("sieges/list");
         mav.addObject("pageTitle", "Sièges");
         mav.addObject("currentPage", "sieges");
-        mav.addObject("sieges", siegeService.findAll());
+        java.util.List<com.itu.aviation.entity.Siege> all = siegeService.findAll();
+        java.util.List<com.itu.aviation.entity.Siege> filtered = all.stream().filter(s -> {
+            if (numero != null && !numero.isBlank()) {
+                if (s.getNumero() == null || !s.getNumero().toLowerCase().contains(numero.toLowerCase())) return false;
+            }
+            if (avionId != null) {
+                if (s.getAvion() == null || !avionId.equals(s.getAvion().getId())) return false;
+            }
+            if (classeId != null) {
+                if (s.getClasse() == null || !classeId.equals(s.getClasse().getId())) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("sieges", filtered);
+        mav.addObject("avions", avionService.findAll());
+        mav.addObject("classes", classeService.findAll());
         return mav;
     }
 

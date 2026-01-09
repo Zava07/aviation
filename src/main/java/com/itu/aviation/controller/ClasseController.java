@@ -7,7 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 @Controller
 @RequestMapping("/classes")
 public class ClasseController {
@@ -16,11 +18,22 @@ public class ClasseController {
     private ClasseService classeService;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) String nomClasse,
+                             @RequestParam(required = false) Integer niveau) {
         ModelAndView mav = new ModelAndView("classes/list");
         mav.addObject("pageTitle", "Classes");
         mav.addObject("currentPage", "classes");
-        mav.addObject("classes", classeService.findAll());
+        List<com.itu.aviation.entity.Classe> all = classeService.findAll();
+        List<com.itu.aviation.entity.Classe> filtered = all.stream().filter(c -> {
+            if (nomClasse != null && !nomClasse.isBlank()) {
+                if (c.getNomClasse() == null || !c.getNomClasse().toLowerCase().contains(nomClasse.toLowerCase())) return false;
+            }
+            if (niveau != null) {
+                if (c.getNiveau() == null || !niveau.equals(c.getNiveau())) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("classes", filtered);
         return mav;
     }
 

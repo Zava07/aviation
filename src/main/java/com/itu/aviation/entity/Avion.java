@@ -37,7 +37,7 @@ public class Avion {
     private List<Siege> sieges = new ArrayList<>();
 
     @OneToMany(mappedBy = "avion", fetch = FetchType.LAZY)
-    private List<Vol> vols = new ArrayList<>();
+    private List<VolInstance> vols = new ArrayList<>();
 
     public Avion() {
     }
@@ -106,11 +106,11 @@ public class Avion {
         this.sieges = sieges;
     }
 
-    public List<Vol> getVols() {
+    public List<VolInstance> getVols() {
         return vols;
     }
 
-    public void setVols(List<Vol> vols) {
+    public void setVols(List<VolInstance> vols) {
         this.vols = vols;
     }
 }

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/prix")
@@ -24,11 +27,32 @@ public class PrixVolClasseController {
     private ClasseService classeService;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) Long volId,
+                             @RequestParam(required = false) Long classeId,
+                             @RequestParam(required = false) java.math.BigDecimal minPrice,
+                             @RequestParam(required = false) java.math.BigDecimal maxPrice) {
         ModelAndView mav = new ModelAndView("prix/list");
         mav.addObject("pageTitle", "Prix Vol/Classe");
         mav.addObject("currentPage", "prix");
-        mav.addObject("prixList", prixService.findAll());
+        java.util.List<com.itu.aviation.entity.PrixVolClasse> all = prixService.findAll();
+        java.util.List<com.itu.aviation.entity.PrixVolClasse> filtered = all.stream().filter(p -> {
+            if (volId != null) {
+                if (p.getVol() == null || !volId.equals(p.getVol().getId())) return false;
+            }
+            if (classeId != null) {
+                if (p.getClasse() == null || !classeId.equals(p.getClasse().getId())) return false;
+            }
+            if (minPrice != null) {
+                if (p.getPrix() == null || p.getPrix().compareTo(minPrice) < 0) return false;
+            }
+            if (maxPrice != null) {
+                if (p.getPrix() == null || p.getPrix().compareTo(maxPrice) > 0) return false;
+            }
+            return true;
+        }).collect(java.util.stream.Collectors.toList());
+        mav.addObject("prixList", filtered);
+        mav.addObject("vols", volService.findAll());
+        mav.addObject("classes", classeService.findAll());
         return mav;
     }
 

@@ -10,9 +10,9 @@ public class VolEquipe {
     private VolEquipeId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("idVol")
-    @JoinColumn(name = "id_vol")
-    private Vol vol;
+    @MapsId("idVolInstance")
+    @JoinColumn(name = "id_vol_instance")
+    private VolInstance volInstance;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idMembre")
@@ -33,12 +33,12 @@ public class VolEquipe {
         this.id = id;
     }
 
-    public Vol getVol() {
-        return vol;
+    public VolInstance getVolInstance() {
+        return volInstance;
     }
 
-    public void setVol(Vol vol) {
-        this.vol = vol;
+    public void setVolInstance(VolInstance volInstance) {
+        this.volInstance = volInstance;
     }
 
     public MembreEquipe getMembre() {

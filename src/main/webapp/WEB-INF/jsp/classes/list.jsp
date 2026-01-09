@@ -8,6 +8,14 @@
         <a href="${pageContext.request.contextPath}/classes/create" class="btn btn-primary">Nouveau</a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/classes" class="form-inline">
+                <input type="text" name="nomClasse" value="${param.nomClasse}" placeholder="Nom classe" class="form-control mr-2" />
+                <input type="number" name="niveau" value="${param.niveau}" placeholder="Niveau" class="form-control mr-2" style="width:110px" />
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/classes" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>

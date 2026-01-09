@@ -17,10 +17,10 @@ public class Reservation {
     private Passager passager;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_vol", nullable = false)
-    private Vol vol;
+    @JoinColumn(name = "id_vol_instance", nullable = false)
+    private VolInstance vol;
 
-    @Column(name = "date_reservation", nullable = false)
+    @Column(name = "date_reservation", nullable = true)
     private LocalDateTime dateReservation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -57,11 +57,11 @@ public class Reservation {
         this.passager = passager;
     }
 
-    public Vol getVol() {
+    public VolInstance getVol() {
         return vol;
     }
 
-    public void setVol(Vol vol) {
+    public void setVol(VolInstance vol) {
         this.vol = vol;
     }
 

@@ -11,6 +11,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/paiements")
@@ -32,11 +35,30 @@ public class PaiementController {
     private StatusPaiementService statusPaiementService;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) Long reservationId,
+                             @RequestParam(required = false) Long statusId,
+                             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFrom,
+                             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateTo) {
         ModelAndView mav = new ModelAndView("paiements/list");
         mav.addObject("pageTitle", "Paiements");
         mav.addObject("currentPage", "paiements");
-        mav.addObject("paiements", paiementService.findAll());
+        java.util.List<com.itu.aviation.entity.Paiement> all = paiementService.findAll();
+        java.util.List<com.itu.aviation.entity.Paiement> filtered = all.stream().filter(p -> {
+            if (reservationId != null) {
+                if (p.getReservation() == null || !reservationId.equals(p.getReservation().getId())) return false;
+            }
+            if (statusId != null) {
+                if (p.getStatusPaiement() == null || !statusId.equals(p.getStatusPaiement().getId())) return false;
+            }
+            if (dateFrom != null) {
+                if (p.getDatePaiement() == null || p.getDatePaiement().toLocalDate().isBefore(dateFrom)) return false;
+            }
+            if (dateTo != null) {
+                if (p.getDatePaiement() == null || p.getDatePaiement().toLocalDate().isAfter(dateTo)) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("paiements", filtered);
         mav.addObject("billets", billetService.findAll());
         mav.addObject("devises", deviseService.findAll());
         mav.addObject("methodes", methodePaiementService.findAll());

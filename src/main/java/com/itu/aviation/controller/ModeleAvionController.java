@@ -7,6 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/modeles")
@@ -16,11 +19,18 @@ public class ModeleAvionController {
     private ModeleAvionService modeleAvionService;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) String nomModele) {
         ModelAndView mav = new ModelAndView("modeles/list");
         mav.addObject("pageTitle", "Modèles Avion");
         mav.addObject("currentPage", "modeles");
-        mav.addObject("modeles", modeleAvionService.findAll());
+        java.util.List<com.itu.aviation.entity.ModeleAvion> all = modeleAvionService.findAll();
+        java.util.List<com.itu.aviation.entity.ModeleAvion> filtered = all.stream().filter(m -> {
+            if (nomModele != null && !nomModele.isBlank()) {
+                if (m.getNomModele() == null || !m.getNomModele().toLowerCase().contains(nomModele.toLowerCase())) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("modeles", filtered);
         return mav;
     }
 

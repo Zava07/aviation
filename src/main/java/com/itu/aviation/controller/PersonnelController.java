@@ -9,6 +9,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/personnel")
@@ -21,11 +24,26 @@ public class PersonnelController {
     private TypeMembreRepository typeMembreRepository;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) String nom,
+                             @RequestParam(required = false) String prenom,
+                             @RequestParam(required = false) Long typeId) {
         ModelAndView mav = new ModelAndView("personnel/list");
         mav.addObject("pageTitle", "Personnel");
         mav.addObject("currentPage", "personnel");
-        mav.addObject("membres", membreEquipeService.findAll());
+        java.util.List<com.itu.aviation.entity.MembreEquipe> all = membreEquipeService.findAll();
+        java.util.List<com.itu.aviation.entity.MembreEquipe> filtered = all.stream().filter(m -> {
+            if (nom != null && !nom.isBlank()) {
+                if (m.getNom() == null || !m.getNom().toLowerCase().contains(nom.toLowerCase())) return false;
+            }
+            if (prenom != null && !prenom.isBlank()) {
+                if (m.getPrenom() == null || !m.getPrenom().toLowerCase().contains(prenom.toLowerCase())) return false;
+            }
+            if (typeId != null) {
+                if (m.getTypeMembre() == null || !typeId.equals(m.getTypeMembre().getId())) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("membres", filtered);
         mav.addObject("types", typeMembreRepository.findAll());
         return mav;
     }

@@ -8,6 +8,20 @@
         <a href="${pageContext.request.contextPath}/personnel/create" class="btn btn-primary">Nouveau</a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/personnel" class="form-inline">
+                <input type="text" name="nom" value="${param.nom}" placeholder="Nom" class="form-control mr-2" />
+                <input type="text" name="prenom" value="${param.prenom}" placeholder="Prénom" class="form-control mr-2" />
+                <select name="typeId" class="form-control mr-2">
+                    <option value="">-- Type --</option>
+                    <c:forEach var="t" items="${types}">
+                        <option value="${t.id}" <c:if test="${param.typeId == t.id}">selected</c:if>>${t.type}</option>
+                    </c:forEach>
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/personnel" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>

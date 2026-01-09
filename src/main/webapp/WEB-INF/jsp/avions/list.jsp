@@ -12,6 +12,27 @@
         </a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/avions" class="form-inline">
+                <input type="text" name="codeAvion" value="${param.codeAvion}" placeholder="Code avion" class="form-control mr-2" />
+                <select name="modeleId" class="form-control mr-2">
+                    <option value="">-- Modèle --</option>
+                    <c:forEach var="m" items="${modeles}">
+                        <option value="${m.id}" <c:if test="${param.modeleId == m.id}">selected</c:if>>${m.nomModele}</option>
+                    </c:forEach>
+                </select>
+                <input type="number" name="minCap" value="${param.minCap}" placeholder="Cap min" class="form-control mr-2" style="width:110px" />
+                <input type="number" name="maxCap" value="${param.maxCap}" placeholder="Cap max" class="form-control mr-2" style="width:110px" />
+                <select name="etatId" class="form-control mr-2">
+                    <option value="">-- État --</option>
+                    <c:forEach var="e" items="${etats}">
+                        <option value="${e.id}" <c:if test="${param.etatId == e.id}">selected</c:if>>${e.etat}</option>
+                    </c:forEach>
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/avions" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>

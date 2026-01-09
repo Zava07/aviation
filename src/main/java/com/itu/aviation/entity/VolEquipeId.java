@@ -6,8 +6,8 @@ import java.util.Objects;
 
 @Embeddable
 public class VolEquipeId implements Serializable {
-    @Column(name = "id_vol")
-    private Long idVol;
+    @Column(name = "id_vol_instance")
+    private Long idVolInstance;
 
     @Column(name = "id_membre")
     private Long idMembre;
@@ -15,17 +15,17 @@ public class VolEquipeId implements Serializable {
     public VolEquipeId() {
     }
 
-    public VolEquipeId(Long idVol, Long idMembre) {
-        this.idVol = idVol;
+    public VolEquipeId(Long idVolInstance, Long idMembre) {
+        this.idVolInstance = idVolInstance;
         this.idMembre = idMembre;
     }
 
-    public Long getIdVol() {
-        return idVol;
+    public Long getIdVolInstance() {
+        return idVolInstance;
     }
 
-    public void setIdVol(Long idVol) {
-        this.idVol = idVol;
+    public void setIdVolInstance(Long idVolInstance) {
+        this.idVolInstance = idVolInstance;
     }
 
     public Long getIdMembre() {
@@ -43,11 +43,11 @@ public class VolEquipeId implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
         VolEquipeId that = (VolEquipeId) o;
-        return Objects.equals(idVol, that.idVol) && Objects.equals(idMembre, that.idMembre);
+        return Objects.equals(idVolInstance, that.idVolInstance) && Objects.equals(idMembre, that.idMembre);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idVol, idMembre);
+        return Objects.hash(idVolInstance, idMembre);
     }
 }

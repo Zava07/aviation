@@ -10,6 +10,25 @@
         <a href="${pageContext.request.contextPath}/vols/create" class="btn btn-primary">Nouveau Vol</a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/vols" class="form-inline">
+                <input type="date" name="date" value="${param.date}" class="form-control mr-2" />
+                <select name="destinationId" class="form-control mr-2">
+                    <option value="">-- Destination --</option>
+                    <c:forEach var="a" items="${aeroports}">
+                        <option value="${a.id}" <c:if test="${param.destinationId == a.id}">selected</c:if>>${a.nomAeroport}</option>
+                    </c:forEach>
+                </select>
+                <select name="statusId" class="form-control mr-2">
+                    <option value="">-- Statut --</option>
+                    <c:forEach var="s" items="${statusList}">
+                        <option value="${s.id}" <c:if test="${param.statusId == s.id}">selected</c:if>>${s.status}</option>
+                    </c:forEach>
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/vols" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <form method="get" action="${pageContext.request.contextPath}/vols" class="search-form">
             <input type="date" name="date" />
             <select name="destinationId">
@@ -32,11 +51,9 @@
                 <thead>
                 <tr>
                     <th>N° Vol</th>
-                    <th>Avion</th>
-                    <th>Départ</th>
-                    <th>Arrivée</th>
-                    <th>Date/Heure Départ</th>
-                    <th>Status</th>
+                    <th>Origine</th>
+                    <th>Destination</th>
+                    <th>Instances</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -46,13 +63,12 @@
                         <c:forEach var="vol" items="${vols}">
                             <tr>
                                 <td>${vol.numeroVol}</td>
-                                <td>${vol.avion != null ? vol.avion.codeAvion : ''}</td>
                                 <td>${vol.aeroportOrigine != null ? vol.aeroportOrigine.nomAeroport : ''}</td>
                                 <td>${vol.aeroportDestination != null ? vol.aeroportDestination.nomAeroport : ''}</td>
-                                <td>${vol.dateDepart}</td>
-                                <td>${vol.statusVol != null ? vol.statusVol.status : ''}</td>
+                                <td>${empty vol.instances ? 0 : vol.instances.size()}</td>
                                 <td>
-                                    <a href="${pageContext.request.contextPath}/vols/edit/${vol.id}" class="btn btn-sm btn-info">Voir</a>
+                                    <a href="${pageContext.request.contextPath}/vols/edit/${vol.id}" class="btn btn-sm btn-info">Modifier</a>
+                                    <a href="${pageContext.request.contextPath}/vol-instances?volId=${vol.id}" class="btn btn-sm btn-secondary">Instances</a>
                                     <form method="post" action="${pageContext.request.contextPath}/vols/delete/${vol.id}" style="display:inline">
                                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Confirmer suppression ?')">Supprimer</button>
                                     </form>

@@ -14,16 +14,6 @@
                 <input type="text" name="numeroVol" required class="form-control" value="${editVol != null ? editVol.numeroVol : ''}" />
             </div>
             <div class="form-group">
-                <label>Avion</label>
-                <select name="avion.id" required class="form-control">
-                    <option value="">-- Sélectionner --</option>
-                    <c:forEach var="a" items="${avions}">
-                        <option value="${a.id}" ${editVol != null and editVol.avion != null and editVol.avion.id == a.id ? 'selected' : ''}>${a.codeAvion}</option>
-                    </c:forEach>
-                </select>
-            </div>
-
-            <div class="form-group">
                 <label>Aéroport Origine</label>
                 <select name="aeroportOrigine.id" required class="form-control">
                     <option value="">-- Sélectionner --</option>
@@ -42,16 +32,7 @@
                     </c:forEach>
                 </select>
             </div>
-
-            <div class="form-group">
-                <label>Date Heure Départ</label>
-                <input type="datetime-local" name="dateDepart" required class="form-control" value="${editVol != null ? editVol.dateDepart : ''}" />
-            </div>
-
-            <div class="form-group">
-                <label>Date Heure Arrivée</label>
-                <input type="datetime-local" name="dateArrivee" required class="form-control" value="${editVol != null ? editVol.dateArrivee : ''}" />
-            </div>
+            
 
             <div class="form-group mt-3">
                 <a href="${pageContext.request.contextPath}/vols" class="btn btn-secondary">Annuler</a>

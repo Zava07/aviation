@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SiegeVolRepository extends JpaRepository<SiegeVol, SiegeVolId> {
-    java.util.Optional<SiegeVol> findByVol_IdAndSiege_Id(Long volId, Long siegeId);
-    java.util.List<SiegeVol> findByVol_Id(Long volId);
+    java.util.Optional<SiegeVol> findByVolInstance_IdAndSiege_Id(Long volInstanceId, Long siegeId);
+    java.util.List<SiegeVol> findByVolInstance_Id(Long volInstanceId);
 }

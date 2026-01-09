@@ -1,14 +1,19 @@
+
 package com.itu.aviation.controller;
 
 import com.itu.aviation.entity.Billet;
 import com.itu.aviation.service.BilletService;
 import com.itu.aviation.service.ReservationService;
+import com.itu.aviation.repository.BilletRepository;
 import com.itu.aviation.repository.StatusBilletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/billets")
@@ -23,14 +28,15 @@ public class BilletController {
     @Autowired
     private StatusBilletRepository statusBilletRepository;
 
+    @Autowired
+    private BilletRepository billetRepository;
+
     @GetMapping
     public ModelAndView list() {
         ModelAndView mav = new ModelAndView("billets/list");
         mav.addObject("pageTitle", "Billets");
         mav.addObject("currentPage", "billets");
-        mav.addObject("billets", billetService.findAll());
-        mav.addObject("reservations", reservationService.findAll());
-        mav.addObject("statusList", statusBilletRepository.findAll());
+        mav.addObject("billets", billetRepository.findAll());
         return mav;
     }
 

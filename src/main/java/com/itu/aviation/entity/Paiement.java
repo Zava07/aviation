@@ -32,7 +32,7 @@ public class Paiement {
     @JoinColumn(name = "id_status_paiement", nullable = false)
     private StatusPaiement statusPaiement;
 
-    @Column(name = "date_paiement", nullable = false)
+    @Column(name = "date_paiement", nullable = true)
     private LocalDateTime datePaiement;
 
     public Paiement() {

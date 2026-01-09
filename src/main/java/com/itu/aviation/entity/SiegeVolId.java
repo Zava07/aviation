@@ -7,8 +7,8 @@ import java.util.Objects;
 @Embeddable
 public class SiegeVolId implements Serializable {
 
-    @Column(name = "id_vol")
-    private Long idVol;
+    @Column(name = "id_vol_instance")
+    private Long idVolInstance;
 
     @Column(name = "id_siege")
     private Long idSiege;
@@ -16,17 +16,18 @@ public class SiegeVolId implements Serializable {
     public SiegeVolId() {
     }
 
-    public SiegeVolId(Long idVol, Long idSiege) {
-        this.idVol = idVol;
+
+    public SiegeVolId(Long idVolInstance, Long idSiege) {
+        this.idVolInstance = idVolInstance;
         this.idSiege = idSiege;
     }
 
-    public Long getIdVol() {
-        return idVol;
+    public Long getIdVolInstance() {
+        return idVolInstance;
     }
 
-    public void setIdVol(Long idVol) {
-        this.idVol = idVol;
+    public void setIdVolInstance(Long idVolInstance) {
+        this.idVolInstance = idVolInstance;
     }
 
     public Long getIdSiege() {
@@ -44,11 +45,11 @@ public class SiegeVolId implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
         SiegeVolId that = (SiegeVolId) o;
-        return Objects.equals(idVol, that.idVol) && Objects.equals(idSiege, that.idSiege);
+        return Objects.equals(idVolInstance, that.idVolInstance) && Objects.equals(idSiege, that.idSiege);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idVol, idSiege);
+        return Objects.hash(idVolInstance, idSiege);
     }
 }

@@ -26,7 +26,7 @@ public class Billet {
     @Column(name = "numero_billet", nullable = false, unique = true, length = 50)
     private String numeroBillet;
 
-    @Column(name = "date_emission", nullable = false)
+    @Column(name = "date_emission", nullable = true)
     private LocalDateTime dateEmission;
 
     @ManyToOne(fetch = FetchType.LAZY)

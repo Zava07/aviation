@@ -7,6 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/type-passagers")
@@ -15,14 +18,34 @@ public class TypePassagerController {
     @Autowired
     private TypePassagerRepository repo;
 
-    @GetMapping
-    public ModelAndView list() {
-        ModelAndView mav = new ModelAndView("typepassagers/list");
-        mav.addObject("pageTitle", "Types Passagers");
-        mav.addObject("currentPage", "type-passagers");
-        mav.addObject("items", repo.findAll());
-        return mav;
-    }
+   @GetMapping
+public ModelAndView list(@RequestParam(required = false) Map<String, String> params) {
+
+    ModelAndView mav = new ModelAndView("typepassagers/list");
+    mav.addObject("pageTitle", "Types Passagers");
+    mav.addObject("currentPage", "type-passagers");
+
+    // 🔹 récupérer le paramètre "type" depuis la map
+    String type = params != null ? params.get("type") : null;
+
+    List<TypePassager> all = repo.findAll();
+
+    List<TypePassager> filtered = all.stream()
+            .filter(t -> {
+                if (type != null && !type.isBlank()) {
+                    return t.getType() != null
+                            && t.getType().toLowerCase().contains(type.toLowerCase());
+                }
+                return true;
+            })
+            .collect(Collectors.toList());
+
+    mav.addObject("items", filtered);
+    mav.addObject("type", type); // utile pour garder la valeur dans le formulaire
+
+    return mav;
+}
+
 
     @GetMapping("/create")
     public ModelAndView create() {

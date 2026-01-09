@@ -8,6 +8,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+ 
 
 @Controller
 @RequestMapping("/passagers")
@@ -20,11 +23,30 @@ public class PassagerController {
     private TypePassagerRepository typePassagerRepository;
 
     @GetMapping
-    public ModelAndView list() {
+    public ModelAndView list(@RequestParam(required = false) String nom,
+                             @RequestParam(required = false) String prenom,
+                             @RequestParam(required = false) String email,
+                             @RequestParam(required = false) Long typeId) {
         ModelAndView mav = new ModelAndView("passagers/list");
         mav.addObject("pageTitle", "Passagers");
         mav.addObject("currentPage", "passagers");
-        mav.addObject("passagers", passagerService.findAll());
+        List<com.itu.aviation.entity.Passager> all = passagerService.findAll();
+        List<com.itu.aviation.entity.Passager> filtered = all.stream().filter(p -> {
+            if (nom != null && !nom.isBlank()) {
+                if (p.getNom() == null || !p.getNom().toLowerCase().contains(nom.toLowerCase())) return false;
+            }
+            if (prenom != null && !prenom.isBlank()) {
+                if (p.getPrenom() == null || !p.getPrenom().toLowerCase().contains(prenom.toLowerCase())) return false;
+            }
+            if (email != null && !email.isBlank()) {
+                if (p.getEmail() == null || !p.getEmail().toLowerCase().contains(email.toLowerCase())) return false;
+            }
+            if (typeId != null) {
+                if (p.getTypePassager() == null || !typeId.equals(p.getTypePassager().getId())) return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        mav.addObject("passagers", filtered);
         mav.addObject("types", typePassagerRepository.findAll());
         return mav;
     }

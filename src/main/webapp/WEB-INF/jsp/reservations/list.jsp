@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
 
 <div class="card">
@@ -8,20 +9,23 @@
         <a href="${pageContext.request.contextPath}/reservations/create" class="btn btn-primary">Nouvelle Réservation</a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/reservations" class="form-inline">
+                <input type="text" name="q" value="${param.q}" placeholder="Recherche..." class="form-control mr-2" />
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/reservations" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <form method="get" action="${pageContext.request.contextPath}/reservations" class="filters">
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <input type="text" name="numero" placeholder="Numéro" value="${filterNumero}" class="form-control" />
                 <input type="text" name="passager" placeholder="Passager (nom/prenom)" value="${filterPassager}" class="form-control" />
-                <select name="vol" class="form-control">
-                    <option value="">-- Vol --</option>
-                    <c:forEach var="v" items="${vols}">
-                        <option value="${v.numeroVol}" ${filterVol == v.numeroVol ? 'selected' : ''}>${v.numeroVol} - ${v.dateDepart}</option>
-                    </c:forEach>
-                </select>
+                <!-- Filtre par numéro de vol (texte) -->
+                <input type="text" name="vol" placeholder="Vol (numéro)" value="${filterVol}" class="form-control" />
                 <select name="status" class="form-control">
                     <option value="">-- Statut --</option>
                     <c:forEach var="s" items="${statusList}">
-                        <option value="${s.id}" ${filterStatus == s.id ? 'selected' : ''}>${s.nomStatus}</option>
+                        <option value="${s.id}" <c:if test="${filterStatus != null and filterStatus == s.id}">selected</c:if>>${s.nomStatus}</option>
                     </c:forEach>
                 </select>
                 <input type="date" name="dateReservation" value="${filterDate}" class="form-control" />
@@ -56,7 +60,14 @@
                                 </c:if>
                             </td>
                             <td>
-                                <c:if test="${not empty r.vol}">${r.vol.numeroVol}</c:if>
+                                <c:if test="${not empty r.vol}">
+                                    <c:choose>
+                                        <c:when test="${not empty r.vol.vol}">
+                                            ${r.vol.vol.numeroVol} - ${r.vol.dateDepart}
+                                        </c:when>
+                                        <c:otherwise/>
+                                    </c:choose>
+                                </c:if>
                             </td>
                             <td>
                                 <c:if test="${not empty r.dateReservation}">${r.dateReservation}</c:if>
@@ -74,6 +85,11 @@
                                 <c:if test="${not empty r.statutReservation}">${r.statutReservation.nomStatus}</c:if>
                             </td>
                             <td>
+                                <c:if test="${empty r.statutReservation or not fn:contains(fn:toLowerCase(r.statutReservation.nomStatus),'confirm')}">
+                                    <form method="post" action="${pageContext.request.contextPath}/reservations/confirm/${r.id}" style="display:inline">
+                                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Confirmer cette réservation ?')">Confirmer</button>
+                                    </form>
+                                </c:if>
                                 <a href="${pageContext.request.contextPath}/reservations/edit/${r.id}" class="btn btn-sm btn-info">Modifier</a>
                                 <form method="post" action="${pageContext.request.contextPath}/reservations/delete/${r.id}" style="display:inline">
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Annuler réservation ?')">Annuler</button>

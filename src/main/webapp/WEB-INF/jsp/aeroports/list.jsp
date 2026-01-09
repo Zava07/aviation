@@ -8,6 +8,13 @@
         <a href="${pageContext.request.contextPath}/aeroports/create" class="btn btn-primary">Nouveau</a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/aeroports" class="form-inline">
+                <input type="text" name="q" value="${param.q}" placeholder="Recherche..." class="form-control mr-2" />
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/aeroports" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>

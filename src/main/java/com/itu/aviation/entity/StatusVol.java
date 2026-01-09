@@ -17,7 +17,7 @@ public class StatusVol {
     private String status;
 
     @OneToMany(mappedBy = "statusVol", fetch = FetchType.LAZY)
-    private List<Vol> vols = new ArrayList<>();
+    private List<VolInstance> vols = new ArrayList<>();
 
     public StatusVol() {
     }
@@ -38,11 +38,11 @@ public class StatusVol {
         this.status = status;
     }
 
-    public List<Vol> getVols() {
+    public List<VolInstance> getVols() {
         return vols;
     }
 
-    public void setVols(List<Vol> vols) {
+    public void setVols(List<VolInstance> vols) {
         this.vols = vols;
     }
 }

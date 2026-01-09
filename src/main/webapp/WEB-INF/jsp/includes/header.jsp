@@ -39,7 +39,7 @@
         <nav class="nav-section">
             <p class="nav-section-title">Gestion des Vols</p>
             <ul class="nav-menu">
-                <li class="nav-item has-submenu ${currentPage == 'vols' || currentPage == 'avions' || currentPage == 'aeroports' ? 'open' : ''}">
+                <li class="nav-item has-submenu ${currentPage == 'vols' || currentPage == 'avions' || currentPage == 'vol-instances' || currentPage == 'aeroports' ? 'open' : ''}">
                     <a href="#" class="nav-link">
                         <i class="fas fa-plane-departure"></i>
                         <span>Vols & Avions</span>
@@ -55,6 +55,12 @@
                             <a href="${pageContext.request.contextPath}/avions" class="nav-link ${currentPage == 'avions' ? 'active' : ''}">
                                 <i class="fas fa-plane"></i>
                                 <span>Avions</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/vol-instances" class="nav-link ${currentPage == 'vol-instances' ? 'active' : ''}">
+                                <i class="fas fa-calendar-day"></i>
+                                <span>Instances de Vol</span>
                             </a>
                         </li>
                         

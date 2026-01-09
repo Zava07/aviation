@@ -29,16 +29,7 @@ public class VolService {
     }
 
     public Vol create(Vol vol) {
-        // business rule: an airplane cannot be assigned to overlapping flights
-        if (vol.getAvion() != null) {
-            Long avionId = vol.getAvion().getId();
-            if (avionId != null) {
-                List<Vol> overlaps = volRepository.findOverlapping(avionId, vol.getDateDepart(), vol.getDateArrivee());
-                if (overlaps != null && !overlaps.isEmpty()) {
-                    throw new IllegalStateException("L'avion est déjà affecté à un vol pendant cette période.");
-                }
-            }
-        }
+        // Vol (route) creation: scheduling is handled via VolInstance
         return volRepository.save(vol);
     }
 
@@ -46,17 +37,7 @@ public class VolService {
         if (!volRepository.existsById(id))
             throw new ResourceNotFoundException("Vol not found: " + id);
         vol.setId(id);
-        if (vol.getAvion() != null) {
-            Long avionId = vol.getAvion().getId();
-            if (avionId != null) {
-                List<Vol> overlaps = volRepository.findOverlapping(avionId, vol.getDateDepart(), vol.getDateArrivee());
-                // remove self (existing record) from overlaps
-                overlaps.removeIf(v -> v.getId().equals(id));
-                if (overlaps != null && !overlaps.isEmpty()) {
-                    throw new IllegalStateException("L'avion est déjà affecté à un vol pendant cette période.");
-                }
-            }
-        }
+        // scheduling and overlap checks belong to VolInstance
         return volRepository.save(vol);
     }
 

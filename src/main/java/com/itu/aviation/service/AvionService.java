@@ -38,4 +38,20 @@ public class AvionService {
     public void delete(Long id) {
         avionRepository.deleteById(id);
     }
+
+    public java.util.List<Avion> findAvailable(java.time.LocalDateTime dateDepart, java.time.LocalDateTime dateArrivee, com.itu.aviation.repository.VolInstanceRepository volInstanceRepository) {
+        java.util.List<Avion> all = avionRepository.findAll();
+        if (dateDepart == null || dateArrivee == null) return all;
+        java.util.List<com.itu.aviation.entity.VolInstance> allInstances = volInstanceRepository.findAll();
+        java.util.Set<Long> busy = new java.util.HashSet<>();
+        for (com.itu.aviation.entity.VolInstance vi : allInstances) {
+            if (vi.getAvion() == null || vi.getDateDepart() == null || vi.getDateArrivee() == null) continue;
+            if (vi.getDateDepart().isBefore(dateArrivee) && vi.getDateArrivee().isAfter(dateDepart)) {
+                if (vi.getAvion().getId() != null) busy.add(vi.getAvion().getId());
+            }
+        }
+        java.util.List<Avion> res = new java.util.ArrayList<>();
+        for (Avion a : all) if (!busy.contains(a.getId())) res.add(a);
+        return res;
+    }
 }

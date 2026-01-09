@@ -12,7 +12,7 @@ public class HistoReservation {
     @Column(name = "id_histo_reservation")
     private Long id;
 
-    @Column(name = "date", nullable = false)
+    @Column(name = "date", nullable = true)
     private LocalDateTime date;
 
     @ManyToOne(fetch = FetchType.LAZY)

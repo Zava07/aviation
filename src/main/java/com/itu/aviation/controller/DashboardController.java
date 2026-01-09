@@ -18,6 +18,9 @@ public class DashboardController {
     private VolService volService;
 
     @Autowired
+    private com.itu.aviation.service.VolInstanceService volInstanceService;
+
+    @Autowired
     private AvionService avionService;
 
     @Autowired
@@ -44,11 +47,12 @@ public class DashboardController {
         mav.addObject("totalBillets", billetService.findAll().size());
         mav.addObject("totalPaiements", paiementService.findAll().size());
 
-        List<Vol> recent = vols.stream()
-                .filter(v -> v.getDateDepart() != null)
-                .sorted(Comparator.comparing(Vol::getDateDepart).reversed())
-                .limit(5)
-                .collect(Collectors.toList());
+        // recent actual scheduled instances
+        List<com.itu.aviation.entity.VolInstance> recent = volInstanceService.findAll().stream()
+            .filter(v -> v.getDateDepart() != null)
+            .sorted(Comparator.comparing(com.itu.aviation.entity.VolInstance::getDateDepart).reversed())
+            .limit(5)
+            .collect(Collectors.toList());
         mav.addObject("recentVols", recent);
 
         mav.addObject("pageTitle", "Tableau de Bord");

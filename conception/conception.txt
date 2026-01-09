@@ -26,19 +26,25 @@ aeroport :
     -id_aeroport
     -nom_aeroport
 
-status_vol :
+status_vol : {ouvert ,  fermer}
     -id_status_vol
     -status
+
 
 vol :
     -id_vol 
     -numero_vol
-    -id_avion
-    -date_depart
-    -date_arrivee
+    -date_creation
+    -date_cloture
     -id_status_vol
     -id_aeroport_origine
     -id_aeroport_destination
+
+vol_avion :
+    -id_vol_avion
+    -id_avion
+    -date_depart
+    -date_arriver
     -duree_prevue
     -duree_reelle
 
@@ -70,6 +76,7 @@ passager:
     -id_passager
     -nom
     -prenom
+    -email
     -id_type_passager
     -fidelite {Point de fidelite}
 

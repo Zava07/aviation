@@ -76,8 +76,10 @@ public class ReservationService {
         }
 
         if (volNumero != null && !volNumero.trim().isEmpty()) {
-            Join<Reservation, com.itu.aviation.entity.Vol> vol = root.join("vol", JoinType.LEFT);
-            preds.add(cb.like(cb.lower(vol.get("numeroVol")), "%" + volNumero.toLowerCase().trim() + "%"));
+            // Reservation.vol now references VolInstance; join then join to the route Vol to access numeroVol
+            Join<Reservation, com.itu.aviation.entity.VolInstance> vin = root.join("vol", JoinType.LEFT);
+            Join<com.itu.aviation.entity.VolInstance, com.itu.aviation.entity.Vol> route = vin.join("vol", JoinType.LEFT);
+            preds.add(cb.like(cb.lower(route.get("numeroVol")), "%" + volNumero.toLowerCase().trim() + "%"));
         }
 
         if (statusId != null) {
@@ -110,34 +112,15 @@ public class ReservationService {
             r.setPrix(computePrice(r));
         }
 
-        // if seat assigned, verify availability and reserve it
-        if (r.getSiege() != null && r.getVol() != null) {
-            Long volId = r.getVol().getId();
-            Long siegeId = r.getSiege().getId();
-            SiegeVol sv = siegeVolRepository.findByVol_IdAndSiege_Id(volId, siegeId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Seat not found on this flight"));
-
-            String current = sv.getStatusSiegeVol() != null ? sv.getStatusSiegeVol().getStatus() : "";
-            if (!current.equalsIgnoreCase("Libre") && !current.equalsIgnoreCase("Free")) {
-                throw new IllegalStateException("Seat is not available");
+        // business rule: only one reservation allowed per VolInstance (date) at a time
+        if (r.getVol() != null && r.getVol().getId() != null) {
+            Long volInstanceId = r.getVol().getId();
+            long existing = reservationRepository.countByVol_Id(volInstanceId);
+            if (existing > 0) {
+                throw new IllegalStateException("Une réservation est déjà en cours pour ce vol/instance à cette date");
             }
-
-            // find reserve status
-            StatusSiegeVol reserveStatus = statusSiegeVolRepository.findByStatusContainingIgnoreCase("reserv")
-                    .orElseThrow(() -> new ResourceNotFoundException("Reserve status not configured"));
-
-            sv.setStatusSiegeVol(reserveStatus);
-            sv.setPassager(r.getPassager());
-            siegeVolRepository.save(sv);
-
-            // set reservation status to En attente by default (fallback to first configured status if not found)
-            Optional<StatutReservation> enAttente = statutReservationRepository.findByNomStatusContainingIgnoreCase("en attente");
-            StatutReservation sr = enAttente.orElseGet(() -> statutReservationRepository.findAll().stream().findFirst()
-                    .orElseThrow(() -> new ResourceNotFoundException("No reservation statuses configured")));
-            r.setStatutReservation(sr);
         }
 
-        // final save
         return reservationRepository.save(r);
     }
 
@@ -156,7 +139,7 @@ public class ReservationService {
         if (r.getSiege() != null && r.getVol() != null) {
             Long volId = r.getVol().getId();
             Long siegeId = r.getSiege().getId();
-            SiegeVol sv = siegeVolRepository.findByVol_IdAndSiege_Id(volId, siegeId)
+            SiegeVol sv = siegeVolRepository.findByVolInstance_IdAndSiege_Id(volId, siegeId)
                     .orElse(null);
             if (sv != null) {
                 StatusSiegeVol free = statusSiegeVolRepository.findByStatusContainingIgnoreCase("libre")
@@ -187,10 +170,11 @@ public class ReservationService {
      */
     private BigDecimal computePrice(Reservation r) {
         // base price from PrixVolClasse
+        // base price from PrixVolClasse (prices stored against Vol route)
         java.util.Optional<com.itu.aviation.entity.PrixVolClasse> p = prixVolClasseService.findAll().stream()
-                .filter(x -> x.getVol() != null && x.getVol().getId().equals(r.getVol().getId())
-                        && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
-                .findFirst();
+            .filter(x -> x.getVol() != null && r.getVol()!=null && r.getVol().getVol()!=null && x.getVol().getId().equals(r.getVol().getVol().getId())
+                && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
+            .findFirst();
 
         BigDecimal base = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(BigDecimal.ZERO);
 
@@ -205,7 +189,7 @@ public class ReservationService {
         // occupancy factor
         BigDecimal occupancyFactor = BigDecimal.ZERO;
         if (r.getVol() != null) {
-            java.util.List<SiegeVol> all = siegeVolRepository.findByVol_Id(r.getVol().getId());
+            java.util.List<SiegeVol> all = siegeVolRepository.findByVolInstance_Id(r.getVol().getId());
             long total = all.size();
             long occupied = all.stream().filter(sv -> {
                 String st = sv.getStatusSiegeVol() != null ? sv.getStatusSiegeVol().getStatus() : "";

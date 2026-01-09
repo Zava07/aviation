@@ -8,6 +8,26 @@
         <a href="${pageContext.request.contextPath}/prix/create" class="btn btn-primary">Nouveau</a>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <form method="get" action="${pageContext.request.contextPath}/prix" class="form-inline">
+                <select name="volId" class="form-control mr-2">
+                    <option value="">-- Vol --</option>
+                    <c:forEach var="v" items="${vols}">
+                        <option value="${v.id}" <c:if test="${param.volId == v.id}">selected</c:if>>${v.numeroVol != null ? v.numeroVol : v.id}</option>
+                    </c:forEach>
+                </select>
+                <select name="classeId" class="form-control mr-2">
+                    <option value="">-- Classe --</option>
+                    <c:forEach var="c" items="${classes}">
+                        <option value="${c.id}" <c:if test="${param.classeId == c.id}">selected</c:if>>${c.nomClasse}</option>
+                    </c:forEach>
+                </select>
+                <input type="number" step="0.01" name="minPrice" value="${param.minPrice}" placeholder="Prix min" class="form-control mr-2" />
+                <input type="number" step="0.01" name="maxPrice" value="${param.maxPrice}" placeholder="Prix max" class="form-control mr-2" />
+                <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
+                <a href="${pageContext.request.contextPath}/prix" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
