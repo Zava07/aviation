@@ -19,6 +19,11 @@ public class Passager {
     @Column(name = "prenom", length = 50, nullable = false)
     private String prenom;
 
+    @Column(name = "email", length = 100, nullable = false, unique = true)
+    private String email;
+
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_type_passager", nullable = false)
     private TypePassager typePassager;
@@ -89,5 +94,12 @@ public class Passager {
 
     public void setBagages(List<Bagage> bagages) {
         this.bagages = bagages;
+    }
+        public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

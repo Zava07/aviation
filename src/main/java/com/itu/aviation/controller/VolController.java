@@ -82,12 +82,27 @@ public class VolController {
 
     @PostMapping("/save")
     public String save(@ModelAttribute Vol vol, RedirectAttributes redirect) {
-        if (vol.getId() == null) {
-            volService.create(vol);
-            redirect.addFlashAttribute("successMessage", "Vol créé");
-        } else {
-            volService.update(vol.getId(), vol);
-            redirect.addFlashAttribute("successMessage", "Vol mis à jour");
+        // ensure a status is set (statusVol is non-nullable)
+        if (vol.getStatusVol() == null) {
+            com.itu.aviation.entity.StatusVol def = statusVolRepository.findAll().stream().findFirst().orElse(null);
+            if (def == null) {
+                redirect.addFlashAttribute("errorMessage", "Aucun statut de vol n'est configuré. Veuillez créer un statut avant d'ajouter un vol.");
+                return "redirect:/vols/create";
+            }
+            vol.setStatusVol(def);
+        }
+
+        try {
+            if (vol.getId() == null) {
+                volService.create(vol);
+                redirect.addFlashAttribute("successMessage", "Vol créé");
+            } else {
+                volService.update(vol.getId(), vol);
+                redirect.addFlashAttribute("successMessage", "Vol mis à jour");
+            }
+        } catch (Exception ex) {
+            // provide a friendlier message and avoid server 500 stacktrace to user
+            redirect.addFlashAttribute("errorMessage", "Erreur lors de l'enregistrement du vol: " + ex.getMessage());
         }
         return "redirect:/vols";
     }

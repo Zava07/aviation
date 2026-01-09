@@ -25,6 +25,10 @@ public class PassagerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Passager not found: " + id));
     }
 
+    public java.util.Optional<Passager> findByNomPrenomEmail(String nom, String prenom, String email) {
+        return passagerRepository.findByNomAndPrenomAndEmailIgnoreCase(nom, prenom, email);
+    }
+
     public Passager create(Passager p) {
         return passagerRepository.save(p);
     }

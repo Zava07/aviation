@@ -63,6 +63,43 @@
             </ul>
         </nav>
         <nav class="nav-section">
+            <p class="nav-section-title">Gestion des Reservations</p>
+            <ul class="nav-menu">
+                <li class="nav-item has-submenu ${currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'passagers' ? 'open' : ''}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-book"></i>
+                        <span>Reservations</span>
+                    </a>
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/reservations" class="nav-link ${currentPage == 'reservations' ? 'active' : ''}">
+                                <i class="fas fa-book-open"></i>
+                                <span>Reservations</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/billets" class="nav-link ${currentPage == 'billets' ? 'active' : ''}">
+                                <i class="fas fa-ticket-alt"></i>
+                                <span>Billets</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/paiements" class="nav-link ${currentPage == 'paiements' ? 'active' : ''}">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Paiements</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/passagers" class="nav-link ${currentPage == 'passagers' ? 'active' : ''}">
+                                <i class="fas fa-user"></i>
+                                <span>Passagers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <nav class="nav-section">
             <p class="nav-section-title">Gestion des Entites</p>
             <ul class="nav-menu">
                 <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' ? 'open' : ''}">

@@ -54,10 +54,10 @@ INSERT INTO vol_equipe(id_vol, id_membre, role) VALUES
 -- =========================================
 -- PASSAGER
 -- =========================================
-INSERT INTO passager(nom, prenom, id_type_passager, fidelite) VALUES
-('Rasolo', 'Tiana', 1, 100),
-('Andria', 'Hery', 1, 50),
-('Rakotomalala', 'Mialy', 2, 200);
+INSERT INTO passager(nom, prenom, id_type_passager, email,fidelite) VALUES
+('Rasolo', 'Tiana', 1,'rasolof@gmail.com' ,100),
+('Andria', 'Hery', 1,'andriahery@gmail.com',50),
+('Rakotomalala', 'Mialy', 2, 'rakotom@gmail.com',200);
 
 -- =========================================
 -- RESERVATION
