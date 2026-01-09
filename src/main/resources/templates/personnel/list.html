@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/main :: html(
+          pageTitle='Gestion du Personnel',
+          pageDescription='Équipage et membres du personnel',
+          breadcrumb='Personnel',
+          breadcrumbParent='',
+          breadcrumbParentUrl='',
+          currentPage='personnel',
+          content=~{::content}
+      )}">
+<body>
+    <th:block th:fragment="content">
+        <!-- Filter Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-filter"></i>
+                    Filtres de recherche
+                </h3>
+                <button type="button" class="btn btn-sm btn-secondary" id="resetFilters">
+                    <i class="fas fa-redo"></i> Réinitialiser
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="filter-bar">
+                    <div class="filter-group">
+                        <label for="filterMatricule">Matricule</label>
+                        <input type="text" id="filterMatricule" name="matricule" placeholder="Ex: EMP-001">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterNom">Nom</label>
+                        <input type="text" id="filterNom" name="nom" placeholder="Nom de famille">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterType">Type</label>
+                        <select id="filterType" name="type">
+                            <option value="">Tous</option>
+                            <option th:each="type : ${types}" th:value="${type.typeMembre}" th:text="${type.typeMembre}"></option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterDisponible">Disponibilité</label>
+                        <select id="filterDisponible" name="disponible">
+                            <option value="">Tous</option>
+                            <option value="true">Disponible</option>
+                            <option value="false">Indisponible</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Data Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-user-tie"></i>
+                    Liste du Personnel
+                    <span class="badge badge-primary" id="resultCount" th:text="${membres != null ? #lists.size(membres) + ' membre(s)' : ''}"></span>
+                </h3>
+                <button type="button" class="btn btn-primary" data-modal-open="formModal" onclick="AviationApp.resetForm()">
+                    <i class="fas fa-plus"></i> Nouveau Membre
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Matricule</th>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Type</th>
+                                <th>Téléphone</th>
+                                <th>Email</th>
+                                <th>Disponibilité</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Real data -->
+                            <tr th:each="membre : ${membres}" th:if="${membres != null}" th:data-id="${membre.id}">
+                                <td data-filter="matricule" th:text="${membre.matricule}"></td>
+                                <td data-filter="nom" th:text="${membre.nom}"></td>
+                                <td th:text="${membre.prenom}"></td>
+                                <td data-filter="type">
+                                    <span class="badge badge-info" th:text="${membre.typeMembre?.typeMembre}"></span>
+                                </td>
+                                <td th:text="${membre.telephone}"></td>
+                                <td th:text="${membre.email}"></td>
+                                <td data-filter="disponible">
+                                    <span class="badge" th:classappend="${membre.disponible} ? 'badge-success' : 'badge-danger'"
+                                          th:text="${membre.disponible} ? 'Disponible' : 'Indisponible'"></span>
+                                </td>
+                                <td class="table-actions">
+                                    <button class="btn btn-icon btn-info" th:data-id="${membre.id}" data-action="view" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-warning" th:data-id="${membre.id}" data-action="edit" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-primary" th:data-id="${membre.id}" data-action="assign" title="Affecter Vol">
+                                        <i class="fas fa-plane"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-danger" th:data-id="${membre.id}" data-action="delete" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${membres == null or #lists.isEmpty(membres)}"><td colspan="8" class="text-muted">Aucune donnée disponible.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="pagination">
+                    <span class="pagination-info">Affichage de 1 à 10 sur 32 entrées</span>
+                    <div class="pagination-links">
+                        <a href="#"><i class="fas fa-chevron-left"></i></a>
+                        <span class="active">1</span>
+                        <a href="#">2</a>
+                        <a href="#">3</a>
+                        <a href="#">4</a>
+                        <a href="#"><i class="fas fa-chevron-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Form -->
+        <div class="modal-overlay" id="formModal">
+            <div class="modal modal-lg">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-tie"></i> <span id="modalTitle">Nouveau Membre</span></h3>
+                    <button class="modal-close" data-modal-close>&times;</button>
+                </div>
+                <form id="entityForm" method="post" th:action="@{/personnel/save}">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="entityId">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="matricule">Matricule <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="matricule" name="matricule" required placeholder="Ex: EMP-001">
+                            </div>
+                            <div class="form-group">
+                                <label for="typeMembre">Type <span class="required">*</span></label>
+                                <select class="form-control" id="typeMembre" name="typeMembre.id" required>
+                                    <option value="">-- Sélectionner --</option>
+                                    <option th:each="type : ${types}" th:value="${type.id}" th:text="${type.typeMembre}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nom">Nom <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="nom" name="nom" required placeholder="Ex: RAMAROSON">
+                            </div>
+                            <div class="form-group">
+                                <label for="prenom">Prénom <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="prenom" name="prenom" required placeholder="Ex: Hery">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dateNaissance">Date de Naissance</label>
+                                <input type="date" class="form-control" id="dateNaissance" name="dateNaissance">
+                            </div>
+                            <div class="form-group">
+                                <label for="dateEmbauche">Date d'Embauche</label>
+                                <input type="date" class="form-control" id="dateEmbauche" name="dateEmbauche">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="telephone">Téléphone</label>
+                                <input type="tel" class="form-control" id="telephone" name="telephone" placeholder="+261 34 00 000 00">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="email@aviation.mg">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adresse">Adresse</label>
+                                <input type="text" class="form-control" id="adresse" name="adresse" placeholder="Adresse complète">
+                            </div>
+                            <div class="form-group">
+                                <label for="disponible">Disponibilité</label>
+                                <select class="form-control" id="disponible" name="disponible">
+                                    <option value="true">Disponible</option>
+                                    <option value="false">Indisponible</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-modal-close>
+                            <i class="fas fa-times"></i> Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- Page specific JS -->
+    <th:block th:fragment="extraJs">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                AviationApp.handleFormSubmit('entityForm');
+            });
+        </script>
+    </th:block>
+</body>
+</html>

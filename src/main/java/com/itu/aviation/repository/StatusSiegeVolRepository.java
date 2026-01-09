@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StatusSiegeVolRepository extends JpaRepository<StatusSiegeVol, Long> {
+    java.util.Optional<StatusSiegeVol> findByStatusContainingIgnoreCase(String status);
 }

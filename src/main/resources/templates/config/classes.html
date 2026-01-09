@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/main :: html(
+          pageTitle='Configuration - Classes',
+          pageDescription='Gestion des classes de voyage',
+          breadcrumb='Classes',
+          breadcrumbParent='Configuration',
+          breadcrumbParentUrl='/config/aeroports',
+          currentPage='classes',
+          content=~{::content}
+      )}">
+<body>
+    <th:block th:fragment="content">
+        <!-- Data Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-star"></i>
+                    Classes de Voyage
+                    <span class="badge badge-primary" id="resultCount" th:text="${classes != null ? #lists.size(classes) + ' classe(s)' : ''}"></span>
+                </h3>
+                <button type="button" class="btn btn-primary" data-modal-open="formModal" onclick="AviationApp.resetForm()">
+                    <i class="fas fa-plus"></i> Nouvelle Classe
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Description</th>
+                                <th>Coefficient Prix</th>
+                                <th>Bagages Inclus</th>
+                                <th>Poids Bagage (kg)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="classe : ${classes}" th:if="${classes != null}" th:data-id="${classe.id}">
+                                <td><strong th:text="${classe.nomClasse}"></strong></td>
+                                <td th:text="${classe.description}"></td>
+                                <td th:text="${classe.coefficientPrix}"></td>
+                                <td th:text="${classe.nbBagagesInclus}"></td>
+                                <td th:text="${classe.poidsMaxBagage}"></td>
+                                <td class="table-actions">
+                                    <button class="btn btn-icon btn-warning" th:data-id="${classe.id}" data-action="edit" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-danger" th:data-id="${classe.id}" data-action="delete" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${classes == null or #lists.isEmpty(classes)}"><td colspan="6" class="text-muted">Aucune donnée disponible.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Form -->
+        <div class="modal-overlay" id="formModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-star"></i> <span id="modalTitle">Nouvelle Classe</span></h3>
+                    <button class="modal-close" data-modal-close>&times;</button>
+                </div>
+                <form id="entityForm" method="post" th:action="@{/config/classes/save}">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="entityId">
+                        
+                        <div class="form-group">
+                            <label for="nomClasse">Nom de la Classe <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="nomClasse" name="nomClasse" required placeholder="Ex: Business">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2" placeholder="Description de la classe..."></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="coefficientPrix">Coefficient Prix <span class="required">*</span></label>
+                                <input type="number" step="0.1" class="form-control" id="coefficientPrix" name="coefficientPrix" required min="1" placeholder="2.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="nbBagagesInclus">Bagages Inclus</label>
+                                <input type="number" class="form-control" id="nbBagagesInclus" name="nbBagagesInclus" min="0" placeholder="2">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="poidsMaxBagage">Poids Max Bagage (kg)</label>
+                            <input type="number" class="form-control" id="poidsMaxBagage" name="poidsMaxBagage" min="0" placeholder="32">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-modal-close>
+                            <i class="fas fa-times"></i> Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+
+    <th:block th:fragment="extraJs">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                AviationApp.handleFormSubmit('entityForm');
+            });
+        </script>
+    </th:block>
+</body>
+</html>

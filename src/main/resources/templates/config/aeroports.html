@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/main :: html(
+          pageTitle='Configuration - Aéroports',
+          pageDescription='Gestion des aéroports',
+          breadcrumb='Aéroports',
+          breadcrumbParent='Configuration',
+          breadcrumbParentUrl='/config/classes',
+          currentPage='aeroports',
+          content=~{::content}
+      )}">
+<body>
+    <th:block th:fragment="content">
+        <!-- Filter Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-filter"></i>
+                    Filtres de recherche
+                </h3>
+                <button type="button" class="btn btn-sm btn-secondary" id="resetFilters">
+                    <i class="fas fa-redo"></i> Réinitialiser
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="filter-bar">
+                    <div class="filter-group">
+                        <label for="filterCode">Code IATA</label>
+                        <input type="text" id="filterCode" name="code" placeholder="Ex: TNR">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterNom">Nom</label>
+                        <input type="text" id="filterNom" name="nom" placeholder="Nom de l'aéroport">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterVille">Ville</label>
+                        <input type="text" id="filterVille" name="ville" placeholder="Ex: Antananarivo">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterPays">Pays</label>
+                        <input type="text" id="filterPays" name="pays" placeholder="Ex: Madagascar">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Data Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Liste des Aéroports
+                    <span class="badge badge-primary" id="resultCount" th:text="${aeroports != null ? #lists.size(aeroports) + ' aéroport(s)' : ''}"></span>
+                </h3>
+                <button type="button" class="btn btn-primary" data-modal-open="formModal" onclick="AviationApp.resetForm()">
+                    <i class="fas fa-plus"></i> Nouvel Aéroport
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Code IATA</th>
+                                <th>Nom</th>
+                                <th>Ville</th>
+                                <th>Pays</th>
+                                <th>Fuseau Horaire</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Real data -->
+                            <tr th:each="aeroport : ${aeroports}" th:if="${aeroports != null}" th:data-id="${aeroport.id}">
+                                <td data-filter="code"><strong th:text="${aeroport.codeIata}"></strong></td>
+                                <td data-filter="nom" th:text="${aeroport.nom}"></td>
+                                <td data-filter="ville" th:text="${aeroport.ville}"></td>
+                                <td data-filter="pays" th:text="${aeroport.pays}"></td>
+                                <td th:text="${aeroport.fuseauHoraire}"></td>
+                                <td class="table-actions">
+                                    <button class="btn btn-icon btn-warning" th:data-id="${aeroport.id}" data-action="edit" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-danger" th:data-id="${aeroport.id}" data-action="delete" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${aeroports == null or #lists.isEmpty(aeroports)}"><td colspan="6" class="text-muted">Aucune donnée disponible.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Form -->
+        <div class="modal-overlay" id="formModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-map-marker-alt"></i> <span id="modalTitle">Nouvel Aéroport</span></h3>
+                    <button class="modal-close" data-modal-close>&times;</button>
+                </div>
+                <form id="entityForm" method="post" th:action="@{/config/aeroports/save}">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="entityId">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="codeIata">Code IATA <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="codeIata" name="codeIata" required maxlength="3" placeholder="Ex: TNR">
+                            </div>
+                            <div class="form-group">
+                                <label for="nom">Nom <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="nom" name="nom" required placeholder="Ex: Ivato International">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="ville">Ville <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="ville" name="ville" required placeholder="Ex: Antananarivo">
+                            </div>
+                            <div class="form-group">
+                                <label for="pays">Pays <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="pays" name="pays" required placeholder="Ex: Madagascar">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fuseauHoraire">Fuseau Horaire</label>
+                                <input type="text" class="form-control" id="fuseauHoraire" name="fuseauHoraire" placeholder="Ex: GMT+3">
+                            </div>
+                            <div class="form-group">
+                                <label for="latitude">Latitude</label>
+                                <input type="number" step="any" class="form-control" id="latitude" name="latitude" placeholder="-18.8792">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="longitude">Longitude</label>
+                            <input type="number" step="any" class="form-control" id="longitude" name="longitude" placeholder="47.5079">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-modal-close>
+                            <i class="fas fa-times"></i> Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+
+    <th:block th:fragment="extraJs">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                AviationApp.handleFormSubmit('entityForm');
+            });
+        </script>
+    </th:block>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: html(pageTitle='Devises', pageDescription='Gestion des devises', breadcrumb='Devises', breadcrumbParent='Finances', breadcrumbParentUrl='/paiements', currentPage='devises', content=~{::content})}">
+<body>
+    <th:block th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-coins"></i> Devises</h3>
+                <button class="btn btn-primary" data-modal-open="formModal">Nouvelle Devise</button>
+            </div>
+            <div class="card-body">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Code</th><th>Nom</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="d : ${devises}">
+                            <td th:text="${d.codeDevise}"></td>
+                            <td th:text="${d.nomDevise}"></td>
+                            <td class="table-actions">
+                                <button class="btn btn-icon btn-warning"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-icon btn-danger"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="formModal">
+            <div class="modal">
+                <div class="modal-header"><h3>Nouvelle Devise</h3><button class="modal-close" data-modal-close>&times;</button></div>
+                <form method="post" th:action="@{/devises/save}">
+                    <div class="modal-body">
+                        <div class="form-group"><label for="codeDevise">Code</label><input id="codeDevise" name="codeDevise" class="form-control" required></div>
+                        <div class="form-group"><label for="nomDevise">Nom</label><input id="nomDevise" name="nomDevise" class="form-control"></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-modal-close>Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+</body>
+</html>

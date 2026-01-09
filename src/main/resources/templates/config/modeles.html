@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: html(pageTitle='Modèles Avion', pageDescription='Gestion des modèles avion', breadcrumb='Modèles Avion', breadcrumbParent='Configuration', breadcrumbParentUrl='/classes', currentPage='modeles', content=~{::content})}">
+<body>
+    <th:block th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-jet-fighter"></i> Modèles Avion</h3>
+                <button class="btn btn-primary" data-modal-open="formModal">Nouveau Modèle</button>
+            </div>
+            <div class="card-body">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Nom Modèle</th><th>Fabriquant</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="m : ${modeles}">
+                            <td th:text="${m.nomModele}"></td>
+                            <td th:text="${m.fabriquant}"></td>
+                            <td class="table-actions">
+                                <button class="btn btn-icon btn-warning"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-icon btn-danger"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="formModal">
+            <div class="modal">
+                <div class="modal-header"><h3>Nouvel Modèle</h3><button class="modal-close" data-modal-close>&times;</button></div>
+                <form method="post" th:action="@{/modeles-avion/save}">
+                    <div class="modal-body">
+                        <div class="form-group"><label for="nomModele">Nom</label><input id="nomModele" name="nomModele" class="form-control" required></div>
+                        <div class="form-group"><label for="fabriquant">Fabriquant</label><input id="fabriquant" name="fabriquant" class="form-control"></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-modal-close>Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+
+    <th:block th:fragment="extraJs">
+        <script>document.addEventListener('DOMContentLoaded', function(){AviationApp.handleFormSubmit('entityForm');});</script>
+    </th:block>
+</body>
+</html>

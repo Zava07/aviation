@@ -27,6 +27,17 @@ public class Reservation {
     @JoinColumn(name = "id_status_reservation", nullable = false)
     private StatutReservation statutReservation;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_classe")
+    private Classe classe;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_siege")
+    private Siege siege;
+
+    @Column(name = "prix", precision = 12, scale = 2)
+    private java.math.BigDecimal prix;
+
     public Reservation() {
     }
 
@@ -68,5 +79,29 @@ public class Reservation {
 
     public void setStatutReservation(StatutReservation statutReservation) {
         this.statutReservation = statutReservation;
+    }
+
+    public Classe getClasse() {
+        return classe;
+    }
+
+    public void setClasse(Classe classe) {
+        this.classe = classe;
+    }
+
+    public Siege getSiege() {
+        return siege;
+    }
+
+    public void setSiege(Siege siege) {
+        this.siege = siege;
+    }
+
+    public java.math.BigDecimal getPrix() {
+        return prix;
+    }
+
+    public void setPrix(java.math.BigDecimal prix) {
+        this.prix = prix;
     }
 }

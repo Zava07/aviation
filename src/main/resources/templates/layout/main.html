@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null ? pageTitle + ' - Aviation Manager' : 'Aviation Manager'}">Aviation Manager</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Additional page-specific CSS -->
+    <th:block th:replace="${extraCss} ?: ~{}"></th:block>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-plane"></i>
+                    <h2>AeroManager</h2>
+                </div>
+                <p class="subtitle">Système de Gestion Aérienne</p>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="nav-section">
+                <p class="nav-section-title">Menu Principal</p>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="/" class="nav-link" th:classappend="${currentPage == 'dashboard'} ? 'active'">
+                            <i class="fas fa-home"></i>
+                            <span>Tableau de Bord</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <p class="nav-section-title">Gestion des Vols</p>
+                <ul class="nav-menu">
+                    <li class="nav-item has-submenu" th:classappend="${currentPage == 'vols' or currentPage == 'avions' or currentPage == 'aeroports'} ? 'open'">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-plane-departure"></i>
+                            <span>Vols & Avions</span>
+                        </a>
+                        <ul class="submenu">
+                            <li class="nav-item">
+                                <a href="/vols" class="nav-link" th:classappend="${currentPage == 'vols'} ? 'active'">
+                                    <i class="fas fa-route"></i>
+                                    <span>Vols</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/avions" class="nav-link" th:classappend="${currentPage == 'avions'} ? 'active'">
+                                    <i class="fas fa-plane"></i>
+                                    <span>Avions</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/aeroports" class="nav-link" th:classappend="${currentPage == 'aeroports'} ? 'active'">
+                                    <i class="fas fa-tower-broadcast"></i>
+                                    <span>Aéroports</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <p class="nav-section-title">Réservations</p>
+                <ul class="nav-menu">
+                    <li class="nav-item has-submenu" th:classappend="${currentPage == 'reservations' or currentPage == 'passagers' or currentPage == 'billets'} ? 'open'">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-ticket"></i>
+                            <span>Réservations</span>
+                        </a>
+                        <ul class="submenu">
+                            <li class="nav-item">
+                                <a href="/reservations" class="nav-link" th:classappend="${currentPage == 'reservations'} ? 'active'">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>Réservations</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/passagers" class="nav-link" th:classappend="${currentPage == 'passagers'} ? 'active'">
+                                    <i class="fas fa-users"></i>
+                                    <span>Passagers</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/billets" class="nav-link" th:classappend="${currentPage == 'billets'} ? 'active'">
+                                    <i class="fas fa-receipt"></i>
+                                    <span>Billets</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <p class="nav-section-title">Personnel</p>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="/equipages" class="nav-link" th:classappend="${currentPage == 'equipages'} ? 'active'">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Équipages</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <p class="nav-section-title">Finances</p>
+                <ul class="nav-menu">
+                    <li class="nav-item has-submenu" th:classappend="${currentPage == 'paiements' or currentPage == 'devises'} ? 'open'">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Paiements</span>
+                        </a>
+                        <ul class="submenu">
+                            <li class="nav-item">
+                                <a href="/paiements" class="nav-link" th:classappend="${currentPage == 'paiements'} ? 'active'">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span>Paiements</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/devises" class="nav-link" th:classappend="${currentPage == 'devises'} ? 'active'">
+                                    <i class="fas fa-coins"></i>
+                                    <span>Devises</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <p class="nav-section-title">Configuration</p>
+                <ul class="nav-menu">
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Paramètres</span>
+                        </a>
+                        <ul class="submenu">
+                            <li class="nav-item">
+                                <a href="/classes" class="nav-link" th:classappend="${currentPage == 'classes'} ? 'active'">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span>Classes</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/modeles-avion" class="nav-link" th:classappend="${currentPage == 'modeles'} ? 'active'">
+                                    <i class="fas fa-jet-fighter"></i>
+                                    <span>Modèles Avion</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="breadcrumb">
+                        <a href="/"><i class="fas fa-home"></i></a>
+                        <span class="separator">/</span>
+                        <th:block th:if="${breadcrumbParent != null}">
+                            <a th:href="${breadcrumbParentUrl}" th:text="${breadcrumbParent}">Parent</a>
+                            <span class="separator">/</span>
+                        </th:block>
+                        <span class="current" th:text="${breadcrumb ?: 'Page'}">Page</span>
+                    </nav>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="header-icon">
+                        <i class="fas fa-envelope"></i>
+                        <span class="badge">5</span>
+                    </div>
+                    <div class="user-menu">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=1e3a5f&color=fff" alt="User">
+                        <div class="user-info">
+                            <p class="user-name">Administrateur</p>
+                            <p class="user-role">Super Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Toast Container -->
+                <div class="toast-container"></div>
+
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${successMessage}"></span>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i>
+                    <span th:text="${errorMessage}"></span>
+                </div>
+
+                <!-- Page Title -->
+                <div class="page-title" th:if="${pageTitle}">
+                    <h1 th:text="${pageTitle}">Titre de la page</h1>
+                    <p th:if="${pageDescription}" th:text="${pageDescription}">Description</p>
+                </div>
+
+                <!-- Main Content Slot -->
+                <th:block th:replace="${content} ?: ~{}"></th:block>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom JS -->
+    <script th:src="@{/js/app.js}"></script>
+    <!-- Additional page-specific JS -->
+    <th:block th:replace="${extraJs} ?: ~{}"></th:block>
+</body>
+</html>

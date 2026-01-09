@@ -20,6 +20,9 @@ public class Billet {
     @JoinColumn(name = "id_siege", nullable = false)
     private Siege siege;
 
+    @Transient
+    private java.math.BigDecimal prixFinal;
+
     @Column(name = "numero_billet", nullable = false, unique = true, length = 50)
     private String numeroBillet;
 
@@ -55,6 +58,16 @@ public class Billet {
 
     public void setSiege(Siege siege) {
         this.siege = siege;
+    }
+
+    public java.math.BigDecimal getPrixFinal() {
+        if (this.prixFinal != null) return this.prixFinal;
+        if (this.reservation != null && this.reservation.getPrix() != null) return this.reservation.getPrix();
+        return null;
+    }
+
+    public void setPrixFinal(java.math.BigDecimal prixFinal) {
+        this.prixFinal = prixFinal;
     }
 
     public String getNumeroBillet() {

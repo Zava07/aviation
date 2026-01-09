@@ -30,6 +30,9 @@ public class BilletService {
     }
 
     public Billet create(Billet b) {
+        if (b.getPrixFinal() == null && b.getReservation() != null && b.getReservation().getPrix() != null) {
+            b.setPrixFinal(b.getReservation().getPrix());
+        }
         return billetRepository.save(b);
     }
 
