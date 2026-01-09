@@ -31,7 +31,6 @@ Logique métier :
 Règles métier :
 - Un avion ne peut pas être affecté à deux vols sur la même période
 - Un équipage a une limite d’heures de travail
-- Les créneaux aéroportuaires (slots) doivent être respectés
 
 
 -------------------------------------------------

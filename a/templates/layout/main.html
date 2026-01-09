@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null ? pageTitle + ' - Aviation Manager' : 'Aviation Manager'}">Aviation Manager</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    
+    <!-- Additional page-specific CSS (optional fragment) -->
+    <th:block th:if="${extraCss != null}" th:insert="${extraCss}"></th:block>
+</head>
+<body>
+<div class="app-container">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-plane"></i>
+                <h2>AeroManager</h2>
+            </div>
+            <p class="subtitle">Système de Gestion Aérienne</p>
+        <!-- templates removed (migrated to JSP) -->
+

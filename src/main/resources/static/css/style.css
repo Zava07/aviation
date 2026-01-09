@@ -140,12 +140,17 @@ ul {
 
 /* Submenu */
 .nav-item.has-submenu .submenu {
-    display: none;
+    /* use max-height for smooth transitions instead of display:none/block */
     padding-left: 20px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.32s ease, opacity 0.25s ease;
+    opacity: 0;
 }
 
 .nav-item.has-submenu.open .submenu {
-    display: block;
+    max-height: 800px; /* sufficiently large to contain submenu */
+    opacity: 1;
 }
 
 .nav-item.has-submenu > .nav-link::after {
@@ -154,7 +159,7 @@ ul {
     font-weight: 900;
     margin-left: auto;
     font-size: 0.7rem;
-    transition: var(--transition);
+    transition: transform 0.32s ease;
 }
 
 .nav-item.has-submenu.open > .nav-link::after {

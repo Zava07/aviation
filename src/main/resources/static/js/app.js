@@ -32,14 +32,35 @@ function initSidebar() {
         }
     });
 
-    // Submenu toggle
-    const submenus = document.querySelectorAll('.nav-item.has-submenu');
-    submenus.forEach(item => {
-        const link = item.querySelector('.nav-link');
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            item.classList.toggle('open');
-        });
+    // Submenu toggle with smooth animation
+    const submenuParents = document.querySelectorAll('.nav-item.has-submenu');
+    submenuParents.forEach(parent => {
+        const link = parent.querySelector('.nav-link');
+        const submenu = parent.querySelector('.submenu');
+
+        // initialize max-height based on open state
+        if (submenu) {
+            if (parent.classList.contains('open')) {
+                submenu.style.maxHeight = submenu.scrollHeight + 'px';
+            } else {
+                submenu.style.maxHeight = '0px';
+            }
+        }
+
+        if (link) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                parent.classList.toggle('open');
+                // set maxHeight to animate
+                if (submenu) {
+                    if (parent.classList.contains('open')) {
+                        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                    } else {
+                        submenu.style.maxHeight = '0px';
+                    }
+                }
+            });
+        }
     });
 
     // Active link highlight
