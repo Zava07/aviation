@@ -74,6 +74,7 @@
                         <input type="hidden" name="vol.id" value="${selectedVol.id}" />
                         <input type="hidden" name="siegeIds" id="siegeIds" />
                         <input type="hidden" name="classe.id" id="classeId" />
+                        <input type="hidden" name="prix" id="totalPrix" />
 
                         <div class="form-group">
                             <label>Nom</label>
@@ -150,12 +151,14 @@
         const classeInput = document.getElementById('classeId');
         const chosenSeat = document.getElementById('chosenSeat');
         const chosenPrice = document.getElementById('chosenPrice');
+        const totalPrixInput = document.getElementById('totalPrix');
 
         function updateSelectionDisplay(){
             const selected = seatButtons.filter(b => b.classList.contains('selected'));
             if(selected.length === 0){
                 chosenSeat.textContent = 'Aucun';
                 chosenPrice.textContent = '0.00';
+                if(totalPrixInput) totalPrixInput.value = '0.00';
                 siegeIdsInput.value = '';
                 classeInput.value = '';
                 return;
@@ -165,6 +168,7 @@
             const ids = selected.map(b => b.getAttribute('data-id'));
             chosenSeat.textContent = nums.join(', ');
             chosenPrice.textContent = sum.toFixed(2);
+            if(totalPrixInput) totalPrixInput.value = sum.toFixed(2);
             siegeIdsInput.value = ids.join(',');
             // set classe to first selected's classe
             classeInput.value = selected[0].getAttribute('data-classe');

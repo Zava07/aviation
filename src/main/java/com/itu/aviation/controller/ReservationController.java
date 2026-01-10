@@ -1,10 +1,12 @@
 package com.itu.aviation.controller;
 
+import com.itu.aviation.entity.Billet;
 import com.itu.aviation.entity.Reservation;
 import com.itu.aviation.entity.Vol;
+import com.itu.aviation.entity.VolInstance;
 import com.itu.aviation.entity.Siege;
 import com.itu.aviation.entity.SiegeVol;
-
+import com.itu.aviation.entity.StatusBillet;
 import com.itu.aviation.service.ReservationService;
 import com.itu.aviation.service.PassagerService;
 import com.itu.aviation.service.VolService;
@@ -21,7 +23,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Controller
 @RequestMapping("/reservations")
@@ -80,14 +84,37 @@ public class ReservationController {
         boolean hasFilter = (numero != null && !numero.isBlank()) || (passager != null && !passager.isBlank()) ||
                 (vol != null && !vol.isBlank()) || (status != null) || (dateReservation != null);
 
+        java.util.List<Reservation> reservations;
         if (hasFilter) {
             java.time.LocalDate d = null;
             if (dateReservation != null)
                 d = dateReservation;
-            mav.addObject("reservations", reservationService.search(numero, passager, vol, status, d));
+            reservations = reservationService.search(numero, passager, vol, status, d);
         } else {
-            mav.addObject("reservations", reservationService.findAll());
+            reservations = reservationService.findAll();
         }
+        mav.addObject("reservations", reservations);
+
+        // compute revenue per VolInstance from the reservations being displayed
+        java.util.Map<Long, BigDecimal> revenueMap = new java.util.HashMap<>();
+        for (Reservation r : reservations) {
+            if (r.getVol() != null && r.getVol().getId() != null && r.getPrix() != null) {
+                Long vid = r.getVol().getId();
+                revenueMap.put(vid, revenueMap.getOrDefault(vid, BigDecimal.ZERO).add(r.getPrix()));
+            }
+        }
+        java.util.List<java.util.Map<String, Object>> revenueSummaries = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<Long, BigDecimal> e : revenueMap.entrySet()) {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            Long vid = e.getKey();
+            com.itu.aviation.entity.VolInstance vi = null;
+            try { vi = volInstanceService.findById(vid); } catch (Exception ex) { /* ignore */ }
+            String label = (vi != null && vi.getVol() != null) ? (vi.getVol().getNumeroVol() + " - " + vi.getDateDepart()) : ("VolInstance " + vid);
+            m.put("label", label);
+            m.put("total", e.getValue());
+            revenueSummaries.add(m);
+        }
+        mav.addObject("revenueSummaries", revenueSummaries);
 
         mav.addObject("passagers", passagerService.findAll());
         mav.addObject("vols", volService.findAll());
@@ -205,10 +232,12 @@ public class ReservationController {
             }
             boolean selectable = "Libre".equalsIgnoreCase(status) || "Free".equalsIgnoreCase(status);
 
+                // no server-side seat reservation blocking: selectable based solely on SiegeVol status
+
             dto.put("status", status);
             dto.put("selectable", selectable);
             dto.put("price", priceByClass.getOrDefault(s.getClasse() != null ? s.getClasse().getId() : -1L,
-                    java.math.BigDecimal.ZERO));
+                    BigDecimal.ZERO));
 
             seats.add(dto);
         }
@@ -223,6 +252,19 @@ public class ReservationController {
     public String save(@ModelAttribute Reservation reservation, @RequestParam(required = false) String siegeIds,
             RedirectAttributes redirect) {
         try {
+            if(reservation !=null){
+                if(reservation.getVol()!=null && reservation.getVol().getId()!=null){
+                    // fetch managed VolInstance
+                    VolInstance vi = volInstanceService.findById(reservation.getVol().getId());
+                    reservation.setVol(vi);
+
+                    if(reservation.getDateReservation().isAfter(vi.getDateDepart())){
+                        throw new IllegalStateException("La date de réservation ne peut pas être supérieure à la date de départ du vol.");
+                    }
+
+
+                }
+            }
             // Ensure passenger is persisted: if passager provided without id, try to find existing by nom+prenom+email
             if (reservation.getPassager() != null && reservation.getPassager().getId() == null) {
                 String nom = reservation.getPassager().getNom();
@@ -260,6 +302,12 @@ public class ReservationController {
                     // it
                 }
             }
+            // ensure price computed if missing/zero
+            if ((reservation.getPrix() == null || reservation.getPrix().compareTo(BigDecimal.ZERO) == 0)
+                    && reservation.getVol() != null && reservation.getClasse() != null) {
+                reservation.setPrix(computePriceLocal(reservation));
+            }
+
             if (reservation.getId() == null) {
                 Reservation saved = reservationService.create(reservation);
                 redirect.addFlashAttribute("successMessage", "Réservation créée");
@@ -279,6 +327,11 @@ public class ReservationController {
                     billetRepository.save(b);
                 }
             } else {
+                // ensure price computed before update as well
+                if ((reservation.getPrix() == null || reservation.getPrix().compareTo(BigDecimal.ZERO) == 0)
+                        && reservation.getVol() != null && reservation.getClasse() != null) {
+                    reservation.setPrix(computePriceLocal(reservation));
+                }
                 Reservation saved = reservationService.update(reservation.getId(), reservation);
                 redirect.addFlashAttribute("successMessage", "Réservation mise à jour");
                 if (saved.getStatutReservation() != null && saved.getStatutReservation().getNomStatus() != null
@@ -334,15 +387,16 @@ public class ReservationController {
 
             // create billet if none exists
             boolean exists = billetRepository.findAll().stream().anyMatch(b -> b.getReservation() != null && b.getReservation().getId().equals(id));
-            if (!exists) {
-                com.itu.aviation.entity.Billet b = new com.itu.aviation.entity.Billet();
+                if (!exists) {
+                Billet b = new Billet();
                 b.setReservation(r);
                 b.setSiege(r.getSiege());
                 b.setDateEmission(java.time.LocalDateTime.now());
                 String num = "BIL-" + (r.getId() != null ? r.getId() : "X") + "-" + System.currentTimeMillis();
                 b.setNumeroBillet(num);
-                java.util.List<com.itu.aviation.entity.StatusBillet> statuses = statusBilletRepository.findAll();
-                if (!statuses.isEmpty()) b.setStatusBillet(statuses.get(0));
+                    b.setPrixFinal(r.getPrix());
+                List<StatusBillet> statuses = statusBilletRepository.findAll();
+                if (!statuses.isEmpty()) b.setStatusBillet(statuses.get(4));
                 billetRepository.save(b);
             }
 
@@ -351,5 +405,62 @@ public class ReservationController {
             redirect.addFlashAttribute("errorMessage", "Impossible de confirmer la réservation: " + ex.getMessage());
         }
         return "redirect:/reservations";
+    }
+
+    @PostMapping("/recalculate-prices")
+    public String recalculatePrices(RedirectAttributes redirect) {
+        try {
+            java.util.List<Reservation> all = reservationService.findAll();
+            int updated = 0;
+            for (Reservation r : all) {
+                if (r.getVol() != null && r.getClasse() != null) {
+                    BigDecimal newPrice = computePriceLocal(r);
+                    if (r.getPrix() == null || r.getPrix().compareTo(newPrice) != 0) {
+                        r.setPrix(newPrice);
+                        reservationService.update(r.getId(), r);
+                        updated++;
+                    }
+                }
+            }
+            redirect.addFlashAttribute("successMessage", "Recalculated prices for " + updated + " reservations");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("errorMessage", "Erreur lors du recalcul des prix: " + ex.getMessage());
+        }
+        return "redirect:/reservations";
+    }
+
+    // Local copy of pricing logic (keeps behaviour in controller without exposing service internals)
+    private BigDecimal computePriceLocal(Reservation r) {
+        Optional<com.itu.aviation.entity.PrixVolClasse> p = prixVolClasseService.findAll().stream()
+            .filter(x -> x.getVol() != null && r.getVol()!=null && r.getVol().getVol()!=null && x.getVol().getId().equals(r.getVol().getVol().getId())
+                && x.getClasse() != null && r.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
+            .findFirst();
+
+        BigDecimal base = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(BigDecimal.ZERO);
+
+        BigDecimal timeFactor = BigDecimal.ZERO;
+        if (r.getVol() != null && r.getVol().getDateDepart() != null) {
+            long days = Math.max(0, java.time.Duration.between(java.time.LocalDateTime.now(), r.getVol().getDateDepart()).toDays());
+            if (days < 7) timeFactor = new BigDecimal("0.20");
+            else if (days < 30) timeFactor = new BigDecimal("0.10");
+        }
+
+        BigDecimal occupancyFactor = BigDecimal.ZERO;
+        if (r.getVol() != null) {
+            java.util.List<com.itu.aviation.entity.SiegeVol> all = siegeVolService.findByVolInstance_Id(r.getVol().getId());
+            long total = all.size();
+            long occupied = all.stream().filter(sv -> {
+                String st = sv.getStatusSiegeVol() != null ? sv.getStatusSiegeVol().getStatus() : "";
+                return !st.equalsIgnoreCase("Libre") && !st.equalsIgnoreCase("Free");
+            }).count();
+            if (total > 0) {
+                double rate = (double) occupied / (double) total;
+                if (rate > 0.8) occupancyFactor = new BigDecimal("0.25");
+                else if (rate > 0.6) occupancyFactor = new BigDecimal("0.10");
+            }
+        }
+
+        BigDecimal multiplier = BigDecimal.ONE.add(timeFactor).add(occupancyFactor);
+        return base.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
     }
 }

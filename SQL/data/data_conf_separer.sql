@@ -40,10 +40,11 @@ INSERT INTO status_siege_vol(status) VALUES
 ('Bloque');
 
 INSERT INTO status_billet(status) VALUES
-('Emis'),
+('Payer et Emis'),
 ('Annule'),
 ('Utilise'),
-('Rembourse');
+('Rembourse'),
+('Reserver')
 
 INSERT INTO methode_paiement(nom_methode) VALUES
 ('Carte'),

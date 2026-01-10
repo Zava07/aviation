@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
 
@@ -14,6 +15,9 @@
                 <input type="text" name="q" value="${param.q}" placeholder="Recherche..." class="form-control mr-2" />
                 <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
                 <a href="${pageContext.request.contextPath}/reservations" class="btn btn-sm btn-secondary ml-2">Réinitialiser</a>
+            </form>
+            <form method="post" action="${pageContext.request.contextPath}/reservations/recalculate-prices" style="display:inline;margin-left:8px">
+                <button class="btn btn-sm btn-warning" type="submit" onclick="return confirm('Recalculer les prix pour toutes les réservations ?')">Recalculer les prix</button>
             </form>
         </div>
         <form method="get" action="${pageContext.request.contextPath}/reservations" class="filters">
@@ -50,6 +54,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <c:set var="totalPrix" value="0" />
                     <c:forEach var="r" items="${reservations}">
                         <tr>
                             <td>${r.id}</td>
@@ -96,8 +101,25 @@
                                 </form>
                             </td>
                         </tr>
+                        <c:set var="totalPrix" value="${totalPrix + (r.prix != null ? r.prix : 0)}" />
                     </c:forEach>
                 </tbody>
+                <c:if test="${not empty revenueSummaries}">
+                    <tfoot>
+                        <c:forEach var="s" items="${revenueSummaries}">
+                            <tr>
+                                <td colspan="6" style="text-align:right">Total pour ${s.label} :</td>
+                                <td style="font-weight:bold"><fmt:formatNumber value="${s.total}" type="number" minFractionDigits="2" maxFractionDigits="2"/></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </c:forEach>
+                        <tr>
+                            <td colspan="6" style="text-align:right;font-weight:bold">Total Général:</td>
+                            <td style="font-weight:bold"><fmt:formatNumber value="${totalPrix}" type="number" minFractionDigits="2" maxFractionDigits="2"/></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

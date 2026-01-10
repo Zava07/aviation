@@ -6,6 +6,7 @@ import com.itu.aviation.repository.ReservationRepository;
 import com.itu.aviation.repository.SiegeVolRepository;
 import com.itu.aviation.repository.StatusSiegeVolRepository;
 import com.itu.aviation.repository.StatutReservationRepository;
+import com.itu.aviation.service.VolInstanceService;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityManager;
@@ -29,6 +30,7 @@ public class ReservationService {
     private final StatusSiegeVolRepository statusSiegeVolRepository;
     private final StatutReservationRepository statutReservationRepository;
     private final PrixVolClasseService prixVolClasseService;
+    private final VolInstanceService volInstanceService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -37,12 +39,14 @@ public class ReservationService {
                               SiegeVolRepository siegeVolRepository,
                               StatusSiegeVolRepository statusSiegeVolRepository,
                               StatutReservationRepository statutReservationRepository,
-                              PrixVolClasseService prixVolClasseService) {
+                              PrixVolClasseService prixVolClasseService,
+                              VolInstanceService volInstanceService) {
         this.reservationRepository = reservationRepository;
         this.siegeVolRepository = siegeVolRepository;
         this.statusSiegeVolRepository = statusSiegeVolRepository;
         this.statutReservationRepository = statutReservationRepository;
         this.prixVolClasseService = prixVolClasseService;
+        this.volInstanceService = volInstanceService;
     }
 
     public List<Reservation> findAll() {
@@ -112,14 +116,7 @@ public class ReservationService {
             r.setPrix(computePrice(r));
         }
 
-        // business rule: only one reservation allowed per VolInstance (date) at a time
-        if (r.getVol() != null && r.getVol().getId() != null) {
-            Long volInstanceId = r.getVol().getId();
-            long existing = reservationRepository.countByVol_Id(volInstanceId);
-            if (existing > 0) {
-                throw new IllegalStateException("Une réservation est déjà en cours pour ce vol/instance à cette date");
-            }
-        }
+        // Note: removed single-reservation-per-VolInstance restriction to allow multiple reservations per instance
 
         return reservationRepository.save(r);
     }
@@ -171,8 +168,15 @@ public class ReservationService {
     private BigDecimal computePrice(Reservation r) {
         // base price from PrixVolClasse
         // base price from PrixVolClasse (prices stored against Vol route)
+        com.itu.aviation.entity.VolInstance vi = r.getVol();
+        if (vi != null && (vi.getVol() == null || vi.getVol().getId() == null) && vi.getId() != null) {
+            try { vi = volInstanceService.findById(vi.getId()); } catch (Exception ex) { /* ignore */ }
+        }
+
+        Long routeVolId = (vi != null && vi.getVol() != null) ? vi.getVol().getId() : null;
+
         java.util.Optional<com.itu.aviation.entity.PrixVolClasse> p = prixVolClasseService.findAll().stream()
-            .filter(x -> x.getVol() != null && r.getVol()!=null && r.getVol().getVol()!=null && x.getVol().getId().equals(r.getVol().getVol().getId())
+            .filter(x -> x.getVol() != null && routeVolId != null && x.getVol().getId().equals(routeVolId)
                 && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
             .findFirst();
 

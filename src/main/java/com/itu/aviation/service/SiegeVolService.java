@@ -38,4 +38,8 @@ public class SiegeVolService {
     public void delete(SiegeVolId id) {
         repo.deleteById(id);
     }
+
+    public java.util.List<SiegeVol> findByVolInstance_Id(Long volInstanceId) {
+        return repo.findByVolInstance_Id(volInstanceId);
+    }
 }
