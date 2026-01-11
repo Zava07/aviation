@@ -50,8 +50,10 @@
                     <input type="hidden" name="departId" value="${param.departId}" />
                     <input type="hidden" name="destId" value="${param.destId}" />
                     <select name="volId" onchange="this.form.submit()" class="form-control">
-                        <c:forEach var="v" items="${volsInstances}">
-                            <option value="${v.id}" ${selectedVol != null && selectedVol.id == v.id ? 'selected' : ''}>${v.numeroVol} - ${v.dateDepart}</option>
+                        <c:forEach var="v" items="${vols}">
+                            <option value="${v.id}" ${selectedVol != null && selectedVol.id == v.id ? 'selected' : ''}>
+                                <c:out value="${v.vol != null ? v.vol.numeroVol : 'Vol'}"/> - <c:out value="${v.dateDepart}"/>
+                            </option>
                         </c:forEach>
                     </select>
                 </form>
@@ -114,7 +116,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Sièges choisis</label>
+                            <label>Siège choisi</label>
                             <div id="chosenSeat">Aucun</div>
                         </div>
 
@@ -177,8 +179,12 @@
         seatButtons.forEach(btn => {
             if(btn.disabled) return;
             btn.addEventListener('click', function(){
-                // toggle selection (allow multiple)
-                btn.classList.toggle('selected');
+                // single selection: deselect others, toggle current
+                const already = btn.classList.contains('selected');
+                seatButtons.forEach(b => b.classList.remove('selected'));
+                if(!already){
+                    btn.classList.add('selected');
+                }
                 updateSelectionDisplay();
             });
         });

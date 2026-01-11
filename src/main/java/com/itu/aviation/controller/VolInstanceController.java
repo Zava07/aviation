@@ -90,9 +90,45 @@ public class VolInstanceController {
     public String save(@ModelAttribute VolInstance vi, RedirectAttributes redirect) {
         try {
             if (vi.getId() == null) {
+                if(vi.getDateDepart().isAfter(vi.getDateArrivee())){
+                    redirect.addFlashAttribute("errorMessage", "La date de départ doit être avant la date d'arrivée.");
+                    return "redirect:/vol-instances/create";
+                }
+                List<VolInstance> existingInstances = volInstanceService.findByAvionAndVol(
+                        vi.getAvion() != null ? vi.getAvion().getId() : null,
+                        vi.getVol() != null ? vi.getVol().getId() : null
+                );
+
+                if(!existingInstances.isEmpty()){
+                    for(VolInstance existingInstance : existingInstances){
+                        if(vi.getDateDepart().isBefore(existingInstance.getDateArrivee()) &&
+                           vi.getDateArrivee().isAfter(existingInstance.getDateDepart())){
+                            redirect.addFlashAttribute("errorMessage", "L'avion est déjà affecté à une autre instance de vol pendant cette période pour ce vol.");
+                            return "redirect:/vol-instances/create";
+                        }
+                    }
+                }
                 volInstanceService.create(vi);
                 redirect.addFlashAttribute("successMessage", "Instance de vol créée");
             } else {
+                if(vi.getDateDepart().isAfter(vi.getDateArrivee())){
+                    redirect.addFlashAttribute("errorMessage", "La date de départ doit être avant la date d'arrivée.");
+                    return "redirect:/vol-instances/create";
+                }
+                List<VolInstance> existingInstances = volInstanceService.findByAvionAndVol(
+                        vi.getAvion() != null ? vi.getAvion().getId() : null,
+                        vi.getVol() != null ? vi.getVol().getId() : null
+                );
+
+                if(!existingInstances.isEmpty()){
+                    for(VolInstance existingInstance : existingInstances){
+                        if(vi.getDateDepart().isBefore(existingInstance.getDateArrivee()) &&
+                           vi.getDateArrivee().isAfter(existingInstance.getDateDepart())){
+                            redirect.addFlashAttribute("errorMessage", "L'avion est déjà affecté à une autre instance de vol pendant cette période pour ce vol.");
+                            return "redirect:/vol-instances/create";
+                        }
+                    }
+                }
                 volInstanceService.update(vi.getId(), vi);
                 redirect.addFlashAttribute("successMessage", "Instance de vol mise à jour");
             }

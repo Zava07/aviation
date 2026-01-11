@@ -209,4 +209,21 @@ public class ReservationService {
         BigDecimal multiplier = BigDecimal.ONE.add(timeFactor).add(occupancyFactor);
         return base.multiply(multiplier).setScale(2, java.math.RoundingMode.HALF_UP);
     }
+
+    /**
+     * Find a SiegeVol by volInstance id and siege id.
+     */
+    public Optional<SiegeVol> findSiegeVolByVolInstanceAndSiege(Long volInstanceId, Long siegeId) {
+        if (volInstanceId == null || siegeId == null) return Optional.empty();
+        return siegeVolRepository.findByVolInstance_IdAndSiege_Id(volInstanceId, siegeId);
+    }
+
+    /**
+     * Return reservation (if any) for given volInstance id and siege id.
+     * Useful to check if a seat is already reserved.
+     */
+    public Optional<Reservation> findReservationByVolInstanceAndSiege(Long volInstanceId, Long siegeId) {
+        if (volInstanceId == null || siegeId == null) return Optional.empty();
+        return reservationRepository.findByVol_IdAndSiege_Id(volInstanceId, siegeId);
+    }
 }

@@ -1,0 +1,7 @@
+-creation table payement_details
+-ajouter caisse
+1-Implementer Payement Billet 
+    -Status billet payer et emis 
+    -ajoute dans payement 
+    - boucle dans payament details
+    

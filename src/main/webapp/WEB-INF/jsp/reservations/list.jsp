@@ -39,6 +39,10 @@
         </form>
 
         <div class="table-responsive mt-3">
+            <style>
+                .actions{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+                .actions form{display:inline-block}
+            </style>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -90,15 +94,17 @@
                                 <c:if test="${not empty r.statutReservation}">${r.statutReservation.nomStatus}</c:if>
                             </td>
                             <td>
-                                <c:if test="${empty r.statutReservation or not fn:contains(fn:toLowerCase(r.statutReservation.nomStatus),'confirm')}">
-                                    <form method="post" action="${pageContext.request.contextPath}/reservations/confirm/${r.id}" style="display:inline">
-                                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Confirmer cette réservation ?')">Confirmer</button>
+                                <div class="actions">
+                                    <c:if test="${empty r.statutReservation or not fn:contains(fn:toLowerCase(r.statutReservation.nomStatus),'confirm')}">
+                                        <form method="post" action="${pageContext.request.contextPath}/reservations/confirm/${r.id}" style="margin:0;">
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Confirmer cette réservation ?')">Confirmer&Payer</button>
+                                        </form>
+                                    </c:if>
+                                    <a href="${pageContext.request.contextPath}/reservations/edit/${r.id}" class="btn btn-sm btn-info">Modifier</a>
+                                    <form method="post" action="${pageContext.request.contextPath}/reservations/delete/${r.id}" style="margin:0;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Annuler réservation ?')">Annuler</button>
                                     </form>
-                                </c:if>
-                                <a href="${pageContext.request.contextPath}/reservations/edit/${r.id}" class="btn btn-sm btn-info">Modifier</a>
-                                <form method="post" action="${pageContext.request.contextPath}/reservations/delete/${r.id}" style="display:inline">
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Annuler réservation ?')">Annuler</button>
-                                </form>
+                                </div>
                             </td>
                         </tr>
                         <c:set var="totalPrix" value="${totalPrix + (r.prix != null ? r.prix : 0)}" />

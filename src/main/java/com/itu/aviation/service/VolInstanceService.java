@@ -88,6 +88,14 @@ public class VolInstanceService {
         return volInstanceRepository.save(vi);
     }
 
+    /**
+     * Return list of VolInstance for given avion id and vol id
+     */
+    public List<VolInstance> findByAvionAndVol(Long avionId, Long volId) {
+        if (avionId == null && volId == null) return List.of();
+        return volInstanceRepository.findByAvion_IdAndVol_Id(avionId, volId);
+    }
+
     public void delete(Long id) {
         volInstanceRepository.deleteById(id);
     }
@@ -118,4 +126,6 @@ public class VolInstanceService {
         }
         return created;
     }
+
+   
 }

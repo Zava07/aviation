@@ -7,6 +7,7 @@ import com.itu.aviation.entity.VolInstance;
 import com.itu.aviation.entity.Siege;
 import com.itu.aviation.entity.SiegeVol;
 import com.itu.aviation.entity.StatusBillet;
+import com.itu.aviation.entity.StatutReservation;
 import com.itu.aviation.service.ReservationService;
 import com.itu.aviation.service.PassagerService;
 import com.itu.aviation.service.VolService;
@@ -167,9 +168,17 @@ public class ReservationController {
         // Filtrer les instances de vols (vol_instance) par date et aéroports
         List<com.itu.aviation.entity.VolInstance> vols = volInstanceService.findAll();
         if (date != null) {
+            // debug: show count before filtering by date
+            System.out.println("[DEBUG] volInstance count before date filter: " + vols.size());
+
+            // Keep instances where the selected date falls within the instance interval
             vols = vols.stream()
-                .filter(v -> v.getDateDepart() != null && v.getDateDepart().toLocalDate().equals(date))
+                .filter(v -> v.getDateDepart() != null && v.getDateArrivee() != null
+                    && (!date.isBefore(v.getDateDepart().toLocalDate()) && !date.isAfter(v.getDateArrivee().toLocalDate())))
                 .toList();
+
+            // debug: show count after filtering by date
+            System.out.println("[DEBUG] volInstance count after date filter: " + vols.size());
         }
         if (departId != null) {
             vols = vols.stream()
@@ -252,6 +261,23 @@ public class ReservationController {
     public String save(@ModelAttribute Reservation reservation, @RequestParam(required = false) String siegeIds,
             RedirectAttributes redirect) {
         try {
+            if(siegeIds !=null){
+                System.out.println("[DEBUG] Received siegeIds: " + siegeIds);
+
+                Optional<Reservation> reserv = reservationService.findReservationByVolInstanceAndSiege(reservation.getVol().getId(),
+                        Long.parseLong(siegeIds.split(",")[0]));
+
+                if(reserv.isPresent()){
+                    if(reserv.get().getStatutReservation().equals("En attente")){
+
+                        throw new IllegalStateException("Le siège sélectionné est en attente de reservation.");
+                    }else if(reserv.get().getStatutReservation().equals("Confirmée")){
+                        throw new IllegalStateException("Le siège sélectionné est déjà réservé.");
+                    }
+                }
+
+        
+            }
             if(reservation !=null){
                 if(reservation.getVol()!=null && reservation.getVol().getId()!=null){
                     // fetch managed VolInstance
@@ -324,6 +350,7 @@ public class ReservationController {
                     b.setPrixFinal(saved.getPrix());
                     java.util.List<com.itu.aviation.entity.StatusBillet> statuses = statusBilletRepository.findAll();
                     if (!statuses.isEmpty()) b.setStatusBillet(statuses.get(0));
+                    
                     billetRepository.save(b);
                 }
             } else {

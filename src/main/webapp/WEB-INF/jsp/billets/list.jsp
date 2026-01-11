@@ -37,6 +37,7 @@
                         <th>Prix</th>
                         <th>Date émission</th>
                         <th>Statut</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,6 +70,14 @@
                             </td>
                             <td>
                                 <c:if test="${not empty b.statusBillet}">${b.statusBillet.status}</c:if>
+                            </td>
+                            <td>
+                                <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+                                    <a href="${pageContext.request.contextPath}/paiements/create?reservationId=${b.reservation != null ? b.reservation.id : ''}" class="btn btn-sm btn-primary">Payer</a>
+                                    <form method="post" action="${pageContext.request.contextPath}/billets/delete/${b.id}" style="margin:0">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce billet ?')">Annuler</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         <c:set var="totalPrix" value="${totalPrix + (b.prixFinal != null ? b.prixFinal : 0)}" />

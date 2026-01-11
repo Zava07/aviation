@@ -14,4 +14,7 @@ public interface VolInstanceRepository extends JpaRepository<VolInstance, Long> 
 
     @Query("SELECT vi FROM VolInstance vi WHERE vi.avion.id = :avionId AND vi.dateDepart < :dateArrivee AND vi.dateArrivee > :dateDepart")
     List<VolInstance> findOverlapping(@Param("avionId") Long avionId, @Param("dateDepart") LocalDateTime dateDepart, @Param("dateArrivee") LocalDateTime dateArrivee);
+
+    // Find all VolInstance for a given avion and vol (route)
+    List<VolInstance> findByAvion_IdAndVol_Id(Long avionId, Long volId);
 }

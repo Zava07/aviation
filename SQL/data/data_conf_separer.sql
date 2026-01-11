@@ -44,7 +44,7 @@ INSERT INTO status_billet(status) VALUES
 ('Annule'),
 ('Utilise'),
 ('Rembourse'),
-('Reserver')
+('Reserver');
 
 INSERT INTO methode_paiement(nom_methode) VALUES
 ('Carte'),
