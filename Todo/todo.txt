@@ -1,7 +1,30 @@
 -creation table payement_details
 -ajouter caisse
+2-Reservation :
+    -A chaque reservation point fideliter augment 
 1-Implementer Payement Billet 
+    {Payement multiple}
     -Status billet payer et emis 
     -ajoute dans payement 
     - boucle dans payament details
+    
+3-Passager 
+    -CRUD , ajoute passager 
+        -Read only
+        -Update fideliter
+    -Gestion fideliter 
+
+4-Vol :
+    -CRUD Vol
+    -Femrer une vol => {set status  = 'Terminer ou Cloturer'}
+
+    .Instance Vol :
+        -ajout un vol Instance
+        
+    
+5-Equipage  / vol
+    -Initer des equipage a une vol 
+
+6-Gestion de bagage
+    
     
