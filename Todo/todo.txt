@@ -1,6 +1,6 @@
 -creation table payement_details
 -ajouter caisse
-2-Reservation :
+2-Reservation : (OK)
     -A chaque reservation point fideliter augment 
 1-Implementer Payement Billet 
     {Payement multiple}
