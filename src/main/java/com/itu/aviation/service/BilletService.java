@@ -29,6 +29,11 @@ public class BilletService {
         return billetRepository.findByNumeroBillet(numero);
     }
 
+    public java.util.List<Billet> searchByNumero(String numeroPart) {
+        if (numeroPart == null || numeroPart.trim().isEmpty()) return java.util.Collections.emptyList();
+        return billetRepository.findByNumeroBilletContainingIgnoreCase(numeroPart.trim());
+    }
+
     public Billet create(Billet b) {
         if (b.getPrixFinal() == null && b.getReservation() != null && b.getReservation().getPrix() != null) {
             b.setPrixFinal(b.getReservation().getPrix());

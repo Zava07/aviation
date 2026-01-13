@@ -162,10 +162,36 @@ paiement :
     -id_status_payement
     -date_paiement
 
+paiement_detail :
+    -id_payement_detail
+    -id_methode_payement
+    -id_payement
+    -montant
+
+Caisse :
+    -id_caisse
+    -numero_caisse
+    -solde
+    -id_methode_paiement
+    -date_last_mouv
+
+Mouvement_Caisse :
+    -id_mouvement_caisse
+    -id_paiement
+    -id_caisse
+    -montant
+    -date
+    -id_type_mouvement_caisse
+
+type_mouvement_caisse : {debit , credit}
+    -id_type_mouvement_caisse
+    -type
 
 type_bagage: {Main, Souterain, Cargo}
     -id_type_bagage
     -type
+
+
 
 
 bagage :

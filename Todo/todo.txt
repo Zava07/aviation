@@ -2,11 +2,15 @@
 -ajouter caisse
 2-Reservation : (OK)
     -A chaque reservation point fideliter augment 
-1-Implementer Payement Billet 
+1-Implementer Payement Billet (Ok => implementer la changement de status (tadidy iny e))
     {Payement multiple}
-    -Status billet payer et emis 
+    -Status billet :
+        - si montant_payement == total_montant_detail et mouvement 
+            Status = payer et emis
+        -else :
+            -non payer
     -ajoute dans payement 
-    - boucle dans payament details
+    - boucle dans payament details`
     
 3-Passager 
     -CRUD , ajoute passager 
@@ -27,4 +31,4 @@
 
 6-Gestion de bagage
     
-    
+     

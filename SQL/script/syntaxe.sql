@@ -315,12 +315,59 @@ CREATE TABLE paiement (
     id_paiement SERIAL PRIMARY KEY,
     id_reservation INT NOT NULL REFERENCES reservation(id_reservation),
     montant NUMERIC(12,2) NOT NULL,
+    id_billet INT REFERENCES billet(id_billet),
     id_devise INT NOT NULL REFERENCES devise(id_devise),
     id_methode_paiement INT NOT NULL REFERENCES methode_paiement(id_methode_paiement),
     id_status_paiement INT NOT NULL REFERENCES status_paiement(id_status_paiement),
     date_paiement TIMESTAMP DEFAULT NOW()
 );
 
+-- =====================================================
+-- PAIEMENT-DETAIL
+-- =====================================================
+CREATE TABLE paiement_detail (
+    id_paiement_detail SERIAL PRIMARY KEY,
+    id_paiement INT NOT NULL REFERENCES paiement(id_paiement),
+    id_methode_paiement INT NOT NULL REFERENCES methode_paiement(id_methode_paiement),
+    montant NUMERIC(12,2) NOT NULL
+);
+
+
+
+-- =====================================================
+-- CAISSE
+-- =====================================================
+CREATE TABLE caisse (
+    id_caisse SERIAL PRIMARY KEY,
+    nom_caisse VARCHAR(50) NOT NULL,
+    solde NUMERIC(15,2) NOT NULL,
+    id_methode_paiement INT NOT NULL REFERENCES methode_paiement(id_methode_paiement),
+    date_last_mouv TIMESTAMP DEFAULT NOW(),
+);
+
+-- =====================================================
+-- TYPE_MOUVEMENT_CAISSE (Debit , Credit)
+-- =====================================================
+
+CREATE TABLE type_mouvement_caisse (
+    id_type_mouvement_caisse SERIAL PRIMARY KEY,
+    type VARCHAR(50) NOT NULL
+);
+
+INSERT INTO type_mouvement_caisse(type) VALUES
+('debit'),
+('credit');
+-- =====================================================
+-- MOUVEMENT-CAISSE
+-- =====================================================
+CREATE TABLE mouvement_caisse (
+    id_mouvement_caisse SERIAL PRIMARY KEY,
+    id_paiement INT REFERENCES paiement(id_paiement),
+    id_caisse INT NOT NULL REFERENCES caisse(id_caisse),
+    montant NUMERIC(15,2) NOT NULL,
+    id_type_mouvement_caisse INT NOT NULL REFERENCES type_mouvement_caisse(id_type_mouvement_caisse),
+    date_mouvement TIMESTAMP DEFAULT NOW()
+);
 -- =====================================================
 -- TYPE BAGAGE
 -- =====================================================

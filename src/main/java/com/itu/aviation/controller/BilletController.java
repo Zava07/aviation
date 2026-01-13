@@ -110,6 +110,22 @@ public class BilletController {
         return mav;
     }
 
+    @GetMapping("/search")
+    @ResponseBody
+    public java.util.List<java.util.Map<String, Object>> search(@RequestParam String q) {
+        java.util.List<com.itu.aviation.entity.Billet> found = billetService.searchByNumero(q);
+        java.util.List<java.util.Map<String, Object>> out = new java.util.ArrayList<>();
+        for (com.itu.aviation.entity.Billet b : found) {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", b.getId());
+            m.put("numero", b.getNumeroBillet());
+            m.put("prix", b.getPrixFinal());
+            m.put("reservationId", b.getReservation() != null ? b.getReservation().getId() : null);
+            out.add(m);
+        }
+        return out;
+    }
+
     @GetMapping("/edit/{id}")
     public ModelAndView edit(@PathVariable Long id) {
         ModelAndView mav = new ModelAndView("billets/list");

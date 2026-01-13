@@ -106,7 +106,7 @@ INSERT INTO siege_vol (id_vol_instance, id_siege, id_status_siege_vol, id_passag
 -- =====================================================
 INSERT INTO devise (nom_devise, valeur_mga) VALUES
 ('MGA', 1),
-('EUR', 4800);
+('EUR', 4800),
 ('USD', 4200);
 
 

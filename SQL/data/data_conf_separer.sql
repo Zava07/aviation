@@ -44,18 +44,28 @@ INSERT INTO status_billet(status) VALUES
 ('Annule'),
 ('Utilise'),
 ('Rembourse'),
-('Reserver');
+('Reserver'),
+('Non payer');
 
 INSERT INTO methode_paiement(nom_methode) VALUES
 ('Carte'),
 ('Mobile money'),
 ('Espece');
 
+INSERT INTO caisse(nom_caisse ,solde , id_methode_paiement ,date_last_mouv) VALUES
+('Caisse carte', 0, 1, NOW()),
+('Caisse mobile money', 0, 2, NOW()),
+('Caisse espece', 0, 3, NOW());
+
 INSERT INTO status_paiement(status) VALUES
 ('En attente'),
 ('Valide'),
 ('Echoue'),
 ('Rembourse');
+
+INSERT INTO type_mouvement_caisse(type) VALUES
+('debit'),
+('credit');
 
 INSERT INTO type_bagage(type) VALUES
 ('Main'),

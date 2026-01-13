@@ -17,6 +17,12 @@ public class Paiement {
     @JoinColumn(name = "id_reservation", nullable = false)
     private Reservation reservation;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_billet", nullable = false)
+    private Billet billet;
+
+    
+
     @Column(name = "montant", precision = 12, scale = 2, nullable = false)
     private BigDecimal montant;
 
@@ -54,6 +60,13 @@ public class Paiement {
         this.reservation = reservation;
     }
 
+    public Billet getBillet() {
+        return billet;
+    }
+
+    public void setBillet(Billet billet) {
+        this.billet = billet;
+    }
     public BigDecimal getMontant() {
         return montant;
     }

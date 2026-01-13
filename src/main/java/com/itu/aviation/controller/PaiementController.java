@@ -1,19 +1,35 @@
 package com.itu.aviation.controller;
 
+import com.itu.aviation.entity.Billet;
+import com.itu.aviation.entity.MouvementCaisse;
 import com.itu.aviation.entity.Paiement;
+import com.itu.aviation.entity.Reservation;
+import com.itu.aviation.entity.StatusBillet;
+import com.itu.aviation.entity.StatusPaiement;
+import com.itu.aviation.entity.TypeMouvementCaisse;
 import com.itu.aviation.service.PaiementService;
 import com.itu.aviation.service.ReservationService;
+import com.itu.aviation.service.StatusBilletService;
 import com.itu.aviation.service.BilletService;
 import com.itu.aviation.service.DeviseService;
 import com.itu.aviation.service.MethodePaiementService;
 import com.itu.aviation.service.StatusPaiementService;
+import com.itu.aviation.service.MouvementCaisseService;
+import com.itu.aviation.service.CaisseService;
+import com.itu.aviation.service.TypeMouvementCaisseService;
+import com.itu.aviation.service.BilletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.io.ObjectInputFilter.Status;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Optional;
  
 
 @Controller
@@ -23,8 +39,7 @@ public class PaiementController {
     @Autowired
     private PaiementService paiementService;
 
-    @Autowired
-    private BilletService billetService;
+    
 
     @Autowired
     private DeviseService deviseService;
@@ -34,25 +49,83 @@ public class PaiementController {
 
     @Autowired
     private StatusPaiementService statusPaiementService;
+
+    @Autowired
+    private MouvementCaisseService mouvementCaisseService;
+
+    @Autowired
+    private CaisseService caisseService;
+
+    @Autowired
+    private TypeMouvementCaisseService typeMouvementCaisseService;
+
+    @Autowired
+    private BilletService billetService;
     
     @Autowired
     ReservationService reservationService;
 
+    @Autowired
+    StatusBilletService statusBilletService;
+
+    @ModelAttribute("reservations")
+    public java.util.List<com.itu.aviation.entity.Reservation> populateReservations(){
+        return reservationService.findAll();
+    }
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) Long reservationId,
                              @RequestParam(required = false) Long statusId,
+                             @RequestParam(required = false) Long methodeId,
+                             @RequestParam(required = false) Long deviseId,
+                             @RequestParam(required = false) Long caisseId,
                              @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFrom,
-                             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateTo) {
+                             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateTo,
+                             @RequestParam(required = false) java.math.BigDecimal montantMin,
+                             @RequestParam(required = false) java.math.BigDecimal montantMax,
+                             @RequestParam(required = false) String passager,
+                             @RequestParam(required = false) java.util.List<String> sortFields,
+                             @RequestParam(required = false) java.util.List<String> sortDirs) {
         ModelAndView mav = new ModelAndView("paiements/list");
         mav.addObject("pageTitle", "Paiements");
         mav.addObject("currentPage", "paiements");
         java.util.List<com.itu.aviation.entity.Paiement> all = paiementService.findAll();
+
+        // build a quick map paiementId -> list of caisseIds to speed-up filtering
+        java.util.List<com.itu.aviation.entity.MouvementCaisse> mouvements = mouvementCaisseService.findAll();
+        java.util.Map<Long, java.util.List<Long>> paiementToCaisses = mouvements.stream()
+            .filter(m -> m.getPaiement() != null && m.getPaiement().getId() != null && m.getCaisse() != null && m.getCaisse().getId() != null)
+            .collect(Collectors.groupingBy(m -> m.getPaiement().getId(), Collectors.mapping(m -> m.getCaisse().getId(), Collectors.toList())));
+        // expose mouvements and mapping to view to allow showing caisse(s) per paiement
+        mav.addObject("mouvements", mouvements);
+        mav.addObject("paiementToCaisses", paiementToCaisses);
         java.util.List<com.itu.aviation.entity.Paiement> filtered = all.stream().filter(p -> {
             if (reservationId != null) {
                 if (p.getReservation() == null || !reservationId.equals(p.getReservation().getId())) return false;
             }
             if (statusId != null) {
                 if (p.getStatusPaiement() == null || !statusId.equals(p.getStatusPaiement().getId())) return false;
+            }
+            if (methodeId != null) {
+                if (p.getMethodePaiement() == null || !methodeId.equals(p.getMethodePaiement().getId())) return false;
+            }
+            if (deviseId != null) {
+                if (p.getDevise() == null || !deviseId.equals(p.getDevise().getId())) return false;
+            }
+            if (caisseId != null) {
+                java.util.List<Long> cs = paiementToCaisses.get(p.getId());
+                if (cs == null || !cs.contains(caisseId)) return false;
+            }
+            if (montantMin != null) {
+                if (p.getMontant() == null || p.getMontant().compareTo(montantMin) < 0) return false;
+            }
+            if (montantMax != null) {
+                if (p.getMontant() == null || p.getMontant().compareTo(montantMax) > 0) return false;
+            }
+            if (passager != null && !passager.trim().isEmpty()) {
+                if (p.getReservation() == null || p.getReservation().getPassager() == null) return false;
+                String fullName = (p.getReservation().getPassager().getNom() == null ? "" : p.getReservation().getPassager().getNom()) + " " + (p.getReservation().getPassager().getPrenom() == null ? "" : p.getReservation().getPassager().getPrenom());
+                if (!fullName.toLowerCase().contains(passager.toLowerCase())) return false;
             }
             if (dateFrom != null) {
                 if (p.getDatePaiement() == null || p.getDatePaiement().toLocalDate().isBefore(dateFrom)) return false;
@@ -62,11 +135,70 @@ public class PaiementController {
             }
             return true;
         }).collect(Collectors.toList());
+        // echo filter params back to view so the form can keep values
+        mav.addObject("filterReservationId", reservationId);
+        mav.addObject("filterStatusId", statusId);
+        mav.addObject("filterMethodeId", methodeId);
+        mav.addObject("filterDeviseId", deviseId);
+        mav.addObject("filterDateFrom", dateFrom);
+        mav.addObject("filterDateTo", dateTo);
+        mav.addObject("filterMontantMin", montantMin);
+        mav.addObject("filterMontantMax", montantMax);
+        mav.addObject("filterPassager", passager);
+        mav.addObject("filterCaisseId", caisseId);
+        // echo filter params back to view so the form can keep values
+        mav.addObject("filterReservationId", reservationId);
+        mav.addObject("filterStatusId", statusId);
+        mav.addObject("filterMethodeId", methodeId);
+        mav.addObject("filterDeviseId", deviseId);
+        mav.addObject("filterDateFrom", dateFrom);
+        mav.addObject("filterDateTo", dateTo);
+        mav.addObject("filterMontantMin", montantMin);
+        mav.addObject("filterMontantMax", montantMax);
+        mav.addObject("filterPassager", passager);
+        // apply multi-criteria sorting if requested (sortFields and sortDirs)
+        if (sortFields != null && !sortFields.isEmpty()) {
+            java.util.Comparator<com.itu.aviation.entity.Paiement> comp = null;
+            for (int i = 0; i < sortFields.size(); i++) {
+                String f = sortFields.get(i);
+                String dir = (sortDirs != null && sortDirs.size() > i) ? sortDirs.get(i) : "asc";
+                java.util.Comparator<com.itu.aviation.entity.Paiement> c = null;
+                switch (f) {
+                    case "montant":
+                        c = java.util.Comparator.comparing(p -> p.getMontant(), java.util.Comparator.nullsLast(java.math.BigDecimal::compareTo));
+                        break;
+                    case "date":
+                        c = java.util.Comparator.comparing(p -> p.getDatePaiement(), java.util.Comparator.nullsLast(java.time.LocalDateTime::compareTo));
+                        break;
+                    case "status":
+                        c = java.util.Comparator.comparing(p -> p.getStatusPaiement() != null ? p.getStatusPaiement().getStatus() : "", java.util.Comparator.nullsLast(String::compareToIgnoreCase));
+                        break;
+                    case "methode":
+                        c = java.util.Comparator.comparing(p -> p.getMethodePaiement() != null ? p.getMethodePaiement().getNomMethode() : "", java.util.Comparator.nullsLast(String::compareToIgnoreCase));
+                        break;
+                    case "devise":
+                        c = java.util.Comparator.comparing(p -> p.getDevise() != null ? p.getDevise().getNomDevise() : "", java.util.Comparator.nullsLast(String::compareToIgnoreCase));
+                        break;
+                    default:
+                        c = java.util.Comparator.comparing(p -> p.getId());
+                }
+                if ("desc".equalsIgnoreCase(dir)) c = c.reversed();
+                comp = (comp == null) ? c : comp.thenComparing(c);
+            }
+            if (comp != null) filtered.sort(comp);
+        }
+
         mav.addObject("paiements", filtered);
         mav.addObject("billets", billetService.findAll());
         mav.addObject("devises", deviseService.findAll());
         mav.addObject("methodes", methodePaiementService.findAll());
         mav.addObject("statusList", statusPaiementService.findAll());
+        mav.addObject("caisses", caisseService.findAll());
+        // add reservations for create modal reservation selector
+        mav.addObject("reservations", reservationService.findAll());
+        // echo sort parameters back to view
+        mav.addObject("sortFields", sortFields);
+        mav.addObject("sortDirs", sortDirs);
         return mav;
     }
 
@@ -98,15 +230,31 @@ public class PaiementController {
     }
 
     @GetMapping("/create")
-    public ModelAndView create(@RequestParam Long reservationId) {
-        ModelAndView mav = new ModelAndView("paiements/pay");
+    public ModelAndView create(@RequestParam(required = false) Long reservationId,
+                                @RequestParam(required = false) Long billetId) {
+        // Redirect to list view and open the create modal there
+        ModelAndView mav = new ModelAndView("paiements/list");
         mav.addObject("pageTitle", "Payer Billet");
         mav.addObject("currentPage", "paiements");
-        mav.addObject("reservation", reservationService.findById(reservationId));
+        mav.addObject("openCreateMultiModal", true);
+        if (reservationId != null) {
+            mav.addObject("reservation", reservationService.findById(reservationId));
+        }
+        if (billetId != null) {
+            com.itu.aviation.entity.Billet b = billetService.findById(billetId);
+            mav.addObject("billet", b);
+            if (b.getReservation() != null) {
+                mav.addObject("reservation", b.getReservation());
+            }
+        }
         mav.addObject("billets", billetService.findAll());
         mav.addObject("devises", deviseService.findAll());
         mav.addObject("methodes", methodePaiementService.findAll());
         mav.addObject("statusList", statusPaiementService.findAll());
+        mav.addObject("caisses", caisseService.findAll());
+        // also include list data for filters
+        mav.addObject("paiements", paiementService.findAll());
+        mav.addObject("reservations", reservationService.findAll());
         return mav;
     }
 
@@ -152,6 +300,102 @@ public class PaiementController {
     public String delete(@PathVariable Long id, RedirectAttributes redirect) {
         paiementService.delete(id);
         redirect.addFlashAttribute("successMessage", "Paiement supprimé");
+        return "redirect:/paiements";
+    }
+
+    @PostMapping("/save-single")
+    public String saveSingle(@RequestParam(required = false) Long billetId,
+                             @RequestParam(required = false) String billetNumero,
+                             @RequestParam(required = false) java.math.BigDecimal montant,
+                             @RequestParam(required = false) Long methodeId,
+                             @RequestParam(required = false) Long deviseId,
+                             @RequestParam(required = false) Long statusId,
+                             @RequestParam(required = false) Long caisseId,
+                             RedirectAttributes redirect) {
+        try {
+            Billet b = null;
+            if (billetId != null) b = billetService.findById(billetId);
+            else if (billetNumero != null && !billetNumero.trim().isEmpty()) b = billetService.findByNumero(billetNumero.trim());
+            if (b == null) {
+                redirect.addFlashAttribute("errorMessage", "Billet introuvable");
+                return "redirect:/paiements";
+            }
+            Reservation res = b.getReservation();
+            BigDecimal amt = montant != null ? montant : b.getPrixFinal();
+            if (amt == null) {
+                redirect.addFlashAttribute("errorMessage", "Montant manquant");
+                return "redirect:/paiements";
+            }
+            List<Paiement> existingPaiements = paiementService.findByBilletId(b.getId());
+            if(existingPaiements != null && !existingPaiements.isEmpty()) {
+                Paiement p = existingPaiements.get(0);
+                List<MouvementCaisse> totalMouv = mouvementCaisseService.findByPaiementId(p.getId());
+                BigDecimal totalPaid = BigDecimal.ZERO;
+                for(MouvementCaisse m : totalMouv) {
+                    if(m.getMontant() != null) {
+                        totalPaid = totalPaid.add(m.getMontant());
+                    }
+                }
+                if (totalPaid.compareTo(b.getPrixFinal()) >= 0) {
+                    redirect.addFlashAttribute("errorMessage", "Le billet a déjà été entièrement payé.");
+                    return "redirect:/paiements";
+                }else{
+                    BigDecimal reste = b.getPrixFinal().subtract(totalPaid);
+                    BigDecimal retour = amt.subtract(reste);
+
+                    BigDecimal reste_a_payer_after_payement = p.getMontant().subtract(totalPaid.add(amt));
+                    MouvementCaisse m = new MouvementCaisse();
+                    m.setPaiement(p);
+                    m.setCaisse(caisseService.findById(caisseId));
+                    m.setMontant(amt);
+                    List<TypeMouvementCaisse> types = typeMouvementCaisseService.findAll();
+                    Optional<TypeMouvementCaisse> creditTypeOpt = types.stream().filter(t -> "credit".equalsIgnoreCase(t.getType())).findFirst();
+                    creditTypeOpt.ifPresent(m::setTypeMouvementCaisse);
+                    m.setDateMouvement(LocalDateTime.now());
+                    mouvementCaisseService.create(m);
+                    if(amt.compareTo(reste) > 0) {
+                        List<StatusBillet> statusBillets = statusBilletService.findAll();
+                        b.setStatusBillet(statusBillets.get(0));
+                        billetService.update(b.getId(), b);
+                        redirect.addFlashAttribute("successMessage", "Paiement enregistré avec une remise de " + reste_a_payer_after_payement.abs() + " car le billet a été entièrement payé.");
+                        return "redirect:/paiements";
+                    }else{
+                        redirect.addFlashAttribute("successMessage", "Paiement enregistré avec une reste a payer de " + retour.abs() + " pour ce billet.");
+                        return "redirect:/paiements";
+                    }
+                }
+            }
+            Paiement p = new Paiement();
+            p.setReservation(res);
+            p.setBillet(b);
+            p.setMontant(res.getPrix());
+            if (methodeId != null) p.setMethodePaiement(methodePaiementService.findById(methodeId));
+            if (deviseId != null) p.setDevise(deviseService.findById(deviseId));
+            if (statusId != null) p.setStatusPaiement(statusPaiementService.findById(statusId));
+            else {
+                List<StatusPaiement> sl = statusPaiementService.findAll();
+                if (!sl.isEmpty()) p.setStatusPaiement(sl.get(1));
+            }
+            p.setDatePaiement(LocalDateTime.now());
+            paiementService.create(p);
+
+            // create mouvement caisse if caisse selected
+            if (caisseId != null) {
+                MouvementCaisse m = new MouvementCaisse();
+                m.setPaiement(p);
+                m.setCaisse(caisseService.findById(caisseId));
+                m.setMontant(amt);
+                List<TypeMouvementCaisse> types = typeMouvementCaisseService.findAll();
+                Optional<TypeMouvementCaisse> creditTypeOpt = types.stream().filter(t -> "credit".equalsIgnoreCase(t.getType())).findFirst();
+                creditTypeOpt.ifPresent(m::setTypeMouvementCaisse);
+                m.setDateMouvement(LocalDateTime.now());
+                mouvementCaisseService.create(m);
+            }
+
+            redirect.addFlashAttribute("successMessage", "Paiement enregistré");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("errorMessage", "Erreur lors du paiement: " + ex.getMessage());
+        }
         return "redirect:/paiements";
     }
 }
