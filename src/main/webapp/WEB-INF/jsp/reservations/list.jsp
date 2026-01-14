@@ -110,6 +110,11 @@
                         <c:set var="totalPrix" value="${totalPrix + (r.prix != null ? r.prix : 0)}" />
                     </c:forEach>
                 </tbody>
+                <c:if test="${empty reservations}">
+                    <tfoot>
+                        <tr><td colspan="9" class="text-muted text-center">Aucune réservation trouvée pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
                 <c:if test="${not empty revenueSummaries}">
                     <tfoot>
                         <c:forEach var="s" items="${revenueSummaries}">

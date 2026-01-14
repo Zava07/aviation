@@ -48,6 +48,11 @@
                     </tr>
                 </c:forEach>
                 </tbody>
+                <c:if test="${empty prixList}">
+                    <tfoot>
+                        <tr><td colspan="4" class="text-muted text-center">Aucun prix trouvé pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

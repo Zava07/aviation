@@ -43,6 +43,7 @@
                 <tbody>
                     <c:set var="totalPrix" value="0" />
                     <c:forEach var="b" items="${billets}">
+                        
                         <tr>
                             <td>${b.id}</td>
                             <td>${b.numeroBillet}</td>
@@ -72,12 +73,20 @@
                                 <c:if test="${not empty b.statusBillet}">${b.statusBillet.status}</c:if>
                             </td>
                             <td>
-                                <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
-                                    <a href="${pageContext.request.contextPath}/paiements/create?billetId=${b.id}" class="btn btn-sm btn-primary">Payer</a>
-                                    <form method="post" action="${pageContext.request.contextPath}/billets/delete/${b.id}" style="margin:0">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce billet ?')">Annuler</button>
-                                    </form>
-                                </div>
+                                <c:choose>
+                                    <c:when test="${b.statusBillet != null and b.statusBillet.status == 'Payer et Emis'}">
+                                        <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+                                            <form method="post" action="${pageContext.request.contextPath}/paiements/rembourser/${b.id}" style="display:inline" onsubmit="return confirm('Rembourser ce billet ?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Rembourser</button>
+                                            </form>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+                                            <a href="${pageContext.request.contextPath}/paiements/create?billetId=${b.id}" class="btn btn-sm btn-primary">Payer</a>
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                         </tr>
                         <c:set var="totalPrix" value="${totalPrix + (b.prixFinal != null ? b.prixFinal : 0)}" />

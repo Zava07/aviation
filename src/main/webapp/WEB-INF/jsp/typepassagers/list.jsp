@@ -33,6 +33,11 @@
                     </tr>
                 </c:forEach>
                 </tbody>
+                <c:if test="${empty items}">
+                    <tfoot>
+                        <tr><td colspan="2" class="text-muted text-center">Aucun type de passager trouvé pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

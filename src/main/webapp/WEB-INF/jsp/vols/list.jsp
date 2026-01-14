@@ -77,7 +77,7 @@
                         </c:forEach>
                     </c:when>
                     <c:otherwise>
-                        <tr><td colspan="7" class="text-muted text-center">Aucune donnée disponible.</td></tr>
+                        <tr><td colspan="5" class="text-muted text-center">Aucun vol trouvé pour ces critères.</td></tr>
                     </c:otherwise>
                 </c:choose>
                 </tbody>

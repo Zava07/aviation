@@ -33,6 +33,11 @@
                     </tr>
                 </c:forEach>
                 </tbody>
+                <c:if test="${empty modeles}">
+                    <tfoot>
+                        <tr><td colspan="2" class="text-muted text-center">Aucun modèle trouvé pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

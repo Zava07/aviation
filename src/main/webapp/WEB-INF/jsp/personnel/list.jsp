@@ -46,6 +46,11 @@
                     </tr>
                 </c:forEach>
                 </tbody>
+                <c:if test="${empty membres}">
+                    <tfoot>
+                        <tr><td colspan="4" class="text-muted text-center">Aucun personnel trouvé pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

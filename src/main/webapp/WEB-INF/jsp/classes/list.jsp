@@ -35,6 +35,11 @@
                     </tr>
                 </c:forEach>
                 </tbody>
+                <c:if test="${empty classes}">
+                    <tfoot>
+                        <tr><td colspan="3" class="text-muted text-center">Aucune classe trouvée pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

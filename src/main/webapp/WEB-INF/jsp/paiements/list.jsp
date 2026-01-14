@@ -333,7 +333,7 @@
 
                             <td>
                                 <a href="${pageContext.request.contextPath}/paiements/edit/${p.id}" class="btn btn-sm btn-outline-primary">Voir</a>
-                                <form method="post" action="${pageContext.request.contextPath}/paiements/delete/${p.id}" style="display:inline" onsubmit="return confirm('Supprimer ce paiement ?');">
+                                <form method="post" action="${pageContext.request.contextPath}/paiements/rembourser/${p.billet.id}" style="display:inline" onsubmit="return confirm('Supprimer ce paiement ?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Rembourser</button>
                                 </form>
                             </td>

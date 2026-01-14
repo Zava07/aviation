@@ -63,7 +63,7 @@
                         </c:forEach>
                     </c:when>
                     <c:otherwise>
-                        <tr><td colspan="6" class="text-muted text-center">Aucun avion disponible.</td></tr>
+                        <tr><td colspan="6" class="text-muted text-center">Aucun avion trouvé pour ces critères.</td></tr>
                     </c:otherwise>
                 </c:choose>
                 </tbody>

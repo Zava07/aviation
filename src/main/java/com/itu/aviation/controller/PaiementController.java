@@ -361,14 +361,17 @@ public class PaiementController {
                     Optional<TypeMouvementCaisse> creditTypeOpt = types.stream().filter(t -> "credit".equalsIgnoreCase(t.getType())).findFirst();
                     creditTypeOpt.ifPresent(m::setTypeMouvementCaisse);
                     m.setDateMouvement(LocalDateTime.now());
-                    mouvementCaisseService.create(m);
-                    Caisse c = m.getCaisse();
-                        if (c != null) {
-                            BigDecimal newSolde = c.getSolde() != null ? c.getSolde().add(amt) : amt;
-                            c.setSolde(newSolde);
-                            c.setDateLastMouv(LocalDateTime.now());
-                            caisseService.update(c.getId(), c);
-                        }
+                    MouvementCaisse saved = mouvementCaisseService.create(m);
+                    Caisse c = saved.getCaisse();
+                    if (c != null) {
+                        String t = saved.getTypeMouvementCaisse() != null ? saved.getTypeMouvementCaisse().getType() : "";
+                        java.math.BigDecimal delta = amt != null ? amt : java.math.BigDecimal.ZERO;
+                        java.math.BigDecimal current = c.getSolde() != null ? c.getSolde() : java.math.BigDecimal.ZERO;
+                        java.math.BigDecimal newSolde = "debit".equalsIgnoreCase(t) ? current.subtract(delta) : current.add(delta);
+                        c.setSolde(newSolde);
+                        c.setDateLastMouv(LocalDateTime.now());
+                        caisseService.update(c.getId(), c);
+                    }
                     if(amt.compareTo(reste) > 0) {
                         List<StatusBillet> statusBillets = statusBilletService.findAll();
                         b.setStatusBillet(statusBillets.get(0));
@@ -405,21 +408,109 @@ public class PaiementController {
                 Optional<TypeMouvementCaisse> creditTypeOpt = types.stream().filter(t -> "credit".equalsIgnoreCase(t.getType())).findFirst();
                 creditTypeOpt.ifPresent(m::setTypeMouvementCaisse);
                 m.setDateMouvement(LocalDateTime.now());
-                mouvementCaisseService.create(m);
-
-                Caisse c = m.getCaisse();;
+                MouvementCaisse saved2 = mouvementCaisseService.create(m);
+                Caisse c = saved2.getCaisse();
                 if (c != null) {
-                    BigDecimal newSolde = c.getSolde() != null ? c.getSolde().add(amt) : amt;
+                    String t = saved2.getTypeMouvementCaisse() != null ? saved2.getTypeMouvementCaisse().getType() : "";
+                    java.math.BigDecimal delta = amt != null ? amt : java.math.BigDecimal.ZERO;
+                    java.math.BigDecimal current = c.getSolde() != null ? c.getSolde() : java.math.BigDecimal.ZERO;
+                    java.math.BigDecimal newSolde = "debit".equalsIgnoreCase(t) ? current.subtract(delta) : current.add(delta);
                     c.setSolde(newSolde);
                     c.setDateLastMouv(LocalDateTime.now());
                     caisseService.update(c.getId(), c);
                 }
             }
-
+            if(amt.compareTo(b.getPrixFinal()) >= 0) {
+                List<StatusBillet> statusBillets = statusBilletService.findAll();
+                b.setStatusBillet(statusBillets.get(0));
+                billetService.update(b.getId(), b);
+            }
             redirect.addFlashAttribute("successMessage", "Paiement enregistré");
         } catch (Exception ex) {
             redirect.addFlashAttribute("errorMessage", "Erreur lors du paiement: " + ex.getMessage());
         }
         return "redirect:/paiements";
     }
+
+    @PostMapping("/rembourser/{billetId}")
+    public String rembourserBillet(@PathVariable Long billetId,
+                                   RedirectAttributes redirect) {
+        try {
+            Billet b = billetService.findById(billetId);
+            if (b == null) {
+                redirect.addFlashAttribute("errorMessage", "Billet introuvable");
+                return "redirect:/billets";
+            }
+            java.math.BigDecimal montant = b.getPrixFinal();
+            if (montant == null || montant.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                redirect.addFlashAttribute("errorMessage", "Montant invalide");
+                return "redirect:/billets";
+            }
+            // Long caisseId = null;
+            List<Paiement> paiements = paiementService.findByBilletId(billetId);
+            if (paiements == null || paiements.isEmpty()) {
+                redirect.addFlashAttribute("errorMessage", "Aucun paiement trouvé pour ce billet");
+                return "redirect:/billets";
+            }
+            Paiement p = paiements.get(0);
+            List<MouvementCaisse> mouvements = mouvementCaisseService.findByPaiementId(p.getId());
+            if (mouvements == null || mouvements.isEmpty()) {
+                redirect.addFlashAttribute("errorMessage", "Aucun mouvement de caisse trouvé pour le paiement de ce billet");
+                return "redirect:/billets";
+            }
+            MouvementCaisse firstMouvement = mouvements.get(0);
+            if (firstMouvement.getCaisse() == null || firstMouvement.getCaisse().getId() == null) {
+                redirect.addFlashAttribute("errorMessage", "Le mouvement de caisse associé au paiement n'a pas de caisse valide");
+                return "redirect:/billets";
+            }
+            long caisseId = firstMouvement.getCaisse().getId();
+            Caisse c = caisseService.findById(caisseId);
+            if (c == null) {
+                redirect.addFlashAttribute("errorMessage", "Caisse introuvable");
+                return "redirect:/billets";
+            }
+            java.math.BigDecimal solde = c.getSolde() != null ? c.getSolde() : java.math.BigDecimal.ZERO;
+            if (solde.compareTo(montant) < 0) {
+                redirect.addFlashAttribute("errorMessage", "Solde insuffisant dans la caisse sélectionnée");
+                return "redirect:/billets";
+            }
+
+            // create debit movement
+            MouvementCaisse m = new MouvementCaisse();
+            m.setCaisse(c);
+            m.setMontant(montant);
+            m.setPaiement(p);
+            java.util.List<TypeMouvementCaisse> types = typeMouvementCaisseService.findAll();
+            java.util.Optional<TypeMouvementCaisse> debitTypeOpt = types.stream().filter(t -> "debit".equalsIgnoreCase(t.getType())).findFirst();
+            debitTypeOpt.ifPresent(m::setTypeMouvementCaisse);
+            m.setDateMouvement(LocalDateTime.now());
+            MouvementCaisse saved = mouvementCaisseService.create(m);
+
+            // update caisse solde
+            Caisse caisseToUpdate = saved.getCaisse();
+            if (caisseToUpdate != null) {
+                java.math.BigDecimal current = caisseToUpdate.getSolde() != null ? caisseToUpdate.getSolde() : java.math.BigDecimal.ZERO;
+                java.math.BigDecimal newSolde = current.subtract(montant);
+                caisseToUpdate.setSolde(newSolde);
+                caisseToUpdate.setDateLastMouv(LocalDateTime.now());
+                caisseService.update(caisseToUpdate.getId(), caisseToUpdate);
+            }
+
+            // set billet status to remboursé if such status exists
+            java.util.List<StatusBillet> statusList = statusBilletService.findAll();
+            java.util.Optional<StatusBillet> rembOpt = statusList.stream().filter(s -> s.getStatus() != null && s.getStatus().toLowerCase().contains("remb")).findFirst();
+            if (rembOpt.isPresent()) {
+                b.setStatusBillet(rembOpt.get());
+                billetService.update(b.getId(), b);
+            }
+
+            
+
+            redirect.addFlashAttribute("successMessage", "Billet remboursé et mouvement enregistré");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("errorMessage", "Erreur lors du remboursement: " + ex.getMessage());
+        }
+        return "redirect:/billets";
+    }
+
 }

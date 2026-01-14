@@ -91,4 +91,48 @@ public class CaisseController {
         mav.addObject("balance", mouvementCaisseService.getBalanceForCaisse(id));
         return mav;
     }
+
+    @GetMapping("/mouvement-caisses")
+    public ModelAndView mouvements(@RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFrom,
+                                    @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateTo,
+                                    @RequestParam(required = false) String type) {
+        ModelAndView mav = new ModelAndView("caisses/mouvements");
+        mav.addObject("pageTitle", "Mouvements Caisses");
+        mav.addObject("currentPage", "mouvement-caisses");
+        List<com.itu.aviation.entity.MouvementCaisse> mv = mouvementCaisseService.findAll();
+        java.util.List<java.util.Map<String,Object>> rows = mv.stream().filter(m -> {
+            if (dateFrom != null && (m.getDateMouvement() == null || m.getDateMouvement().toLocalDate().isBefore(dateFrom))) return false;
+            if (dateTo != null && (m.getDateMouvement() == null || m.getDateMouvement().toLocalDate().isAfter(dateTo))) return false;
+            if (type != null && !type.trim().isEmpty()) {
+                String t = m.getTypeMouvementCaisse() != null ? m.getTypeMouvementCaisse().getType() : "";
+                if (!t.equalsIgnoreCase(type)) return false;
+            }
+            return true;
+        }).map(m -> {
+            java.util.Map<String,Object> r = new java.util.HashMap<>();
+            r.put("id", m.getId());
+            r.put("montant", m.getMontant());
+            r.put("type", m.getTypeMouvementCaisse() != null ? m.getTypeMouvementCaisse().getType() : null);
+            r.put("date", m.getDateMouvement());
+            if (m.getCaisse() != null) {
+                r.put("caisseId", m.getCaisse().getId());
+                r.put("caisseNom", m.getCaisse().getNomCaisse());
+            }
+            if (m.getPaiement() != null) {
+                r.put("paiementId", m.getPaiement().getId());
+                if (m.getPaiement().getBillet() != null) {
+                    r.put("billetNumero", m.getPaiement().getBillet().getNumeroBillet());
+                }
+                if (m.getPaiement().getReservation() != null && m.getPaiement().getReservation().getPassager() != null) {
+                    r.put("passager", m.getPaiement().getReservation().getPassager().getNom() + " " + m.getPaiement().getReservation().getPassager().getPrenom());
+                }
+            }
+            return r;
+        }).collect(java.util.stream.Collectors.toList());
+        mav.addObject("mouvements", rows);
+        mav.addObject("dateFrom", dateFrom);
+        mav.addObject("dateTo", dateTo);
+        mav.addObject("typeFilter", type);
+        return mav;
+    }
 }
