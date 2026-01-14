@@ -11,14 +11,17 @@
             -non payer
     -ajoute dans payement 
     - boucle dans payament details`
-    
-3-Passager 
+
+3- Chiffre d'affaire 
+    -Afficher le total par caisse
+
+4-Passager 
     -CRUD , ajoute passager 
         -Read only
         -Update fideliter
     -Gestion fideliter 
 
-4-Vol :
+5-Vol :
     -CRUD Vol
     -Femrer une vol => {set status  = 'Terminer ou Cloturer'}
 
@@ -26,9 +29,9 @@
         -ajout un vol Instance
         
     
-5-Equipage  / vol
+6-Equipage  / vol
     -Initer des equipage a une vol 
 
-6-Gestion de bagage
+7-Gestion de bagage
     
      

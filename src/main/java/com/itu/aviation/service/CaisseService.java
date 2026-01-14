@@ -20,6 +20,11 @@ public class CaisseService {
         return repo.findAll();
     }
 
+    public List<Caisse> findByMethodeId(Long methodeId) {
+        if (methodeId == null) return repo.findAll();
+        return repo.findByMethodePaiement_Id(methodeId);
+    }
+
     public Caisse findById(Long id) {
         return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Caisse not found: " + id));
     }

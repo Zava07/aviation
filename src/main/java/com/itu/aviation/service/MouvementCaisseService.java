@@ -49,4 +49,49 @@ public class MouvementCaisseService {
         if (paiementId == null) return java.util.Collections.emptyList();
         return repo.findByPaiementId(paiementId);
     }
+
+    /**
+     * Find mouvements by caisse id
+     */
+    public List<MouvementCaisse> findByCaisseId(Long caisseId) {
+        if (caisseId == null) return java.util.Collections.emptyList();
+        return repo.findByCaisseIdOrderByDateMouvementDesc(caisseId);
+    }
+
+    /**
+     * Compute balance for caisse (credits add, debits subtract)
+     */
+    public java.math.BigDecimal getBalanceForCaisse(Long caisseId) {
+        java.math.BigDecimal balance = java.math.BigDecimal.ZERO;
+        List<MouvementCaisse> mv = findByCaisseId(caisseId);
+        for (MouvementCaisse m : mv) {
+            if (m.getMontant() == null) continue;
+            String t = m.getTypeMouvementCaisse() != null ? m.getTypeMouvementCaisse().getType() : "";
+            if ("credit".equalsIgnoreCase(t)) {
+                balance = balance.add(m.getMontant());
+            } else if ("debit".equalsIgnoreCase(t)) {
+                balance = balance.subtract(m.getMontant());
+            } else {
+                // fallback to add
+                balance = balance.add(m.getMontant());
+            }
+        }
+        return balance;
+    }
+
+    /**
+     * Sum of credits for caisse (useful as chiffre d'affaire)
+     */
+    public java.math.BigDecimal getTotalCreditsForCaisse(Long caisseId) {
+        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+        List<MouvementCaisse> mv = findByCaisseId(caisseId);
+        for (MouvementCaisse m : mv) {
+            if (m.getMontant() == null) continue;
+            String t = m.getTypeMouvementCaisse() != null ? m.getTypeMouvementCaisse().getType() : "";
+            if ("credit".equalsIgnoreCase(t)) {
+                total = total.add(m.getMontant());
+            }
+        }
+        return total;
+    }
 }

@@ -61,7 +61,7 @@
                                     <select name="caisseId" class="form-control">
                                         <option value="">-- Caisse --</option>
                                         <c:forEach var="c" items="${caisses}">
-                                            <option value="${c.id}">Caisse #${c.id}</option>
+                                            <option value="${c.id}">Caisse #${c.id}<c:if test="${not empty c.nomCaisse}"> - ${c.nomCaisse}</c:if></option>
                                         </c:forEach>
                                     </select>
                                 </div>
@@ -100,7 +100,14 @@
                     </c:choose>
                 </c:forEach>
 
-                function showModal(){ modal.style.display='block'; }
+                function showModal(){ 
+                    modal.style.display='block'; 
+                    // if methode already selected in modal, trigger change to filter caisses
+                    const ms = modal.querySelector('select[name="methodeId"]');
+                    if (ms && ms.value) {
+                        ms.dispatchEvent(new Event('change'));
+                    }
+                }
                 function hideModal(){ modal.style.display='none'; billetInput.value=''; billetIdHidden.value=''; montantInput.value=''; }
 
                 openBtn && openBtn.addEventListener('click', function(){ showModal(); });
@@ -146,6 +153,92 @@
                     }
                 });
 
+                // --- dynamic caisse filtering based on selected methode (modal + filter) ---
+                const allCaisses = [];
+                <c:forEach var="c" items="${caisses}">
+                    allCaisses.push({id: ${c.id}, nom: '${c.nomCaisse}'});
+                </c:forEach>
+
+                function formatCaisseLabel(item){
+                    return 'Caisse #' + item.id + (item.nom ? ' - ' + item.nom : '');
+                }
+
+                function populateCaisseOptionsInSelect(sel, list, keepSelected){
+                    if(!sel) return;
+                    const prev = sel.value;
+                    sel.innerHTML = '';
+                    const def = document.createElement('option');
+                    def.value = '';
+                    def.textContent = '-- Caisse --';
+                    sel.appendChild(def);
+                    list.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = formatCaisseLabel(item);
+                        sel.appendChild(opt);
+                    });
+                    if (keepSelected && prev) {
+                        const found = Array.from(sel.options).find(o => o.value === prev);
+                        if (found) sel.value = prev;
+                    }
+                }
+
+                function fetchCaissesByMethode(methodeId){
+                    if(!methodeId) return Promise.resolve([]);
+                    const url = "${pageContext.request.contextPath}" + '/api/caisses/by-methode/' + encodeURIComponent(methodeId);
+                    console.log('fetchCaissesByMethode ->', methodeId, url);
+                    return fetch(url)
+                        .then(r => { if(!r.ok) { console.error('fetch failed', r.status); return []; } return r.json(); })
+                        .catch(e => { console.error('fetch error', e); return []; });
+                }
+
+                // --- modal behaviour ---
+                const modalCaisseSelect = modal.querySelector('select[name="caisseId"]');
+                const modalMethodeSelect = modal.querySelector('select[name="methodeId"]');
+
+                // initial full list available in modal
+                populateCaisseOptionsInSelect(modalCaisseSelect, allCaisses, false);
+
+                modalMethodeSelect && modalMethodeSelect.addEventListener('change', function(){
+                    const val = this.value;
+                    if(!val){
+                        populateCaisseOptionsInSelect(modalCaisseSelect, allCaisses, false);
+                        return;
+                    }
+                    fetchCaissesByMethode(val).then(data => populateCaisseOptionsInSelect(modalCaisseSelect, data, false)).catch(() => populateCaisseOptionsInSelect(modalCaisseSelect, allCaisses, false));
+                });
+
+                // when modal opens, if methode already selected, trigger change to filter caisses
+                // handled by the single showModal implementation defined earlier (no wrapper)
+
+                // --- page filter behaviour ---
+                function findSelectOutsideModal(name){
+                    const sels = Array.from(document.querySelectorAll('select[name="' + name + '"]'));
+                    return sels.find(s => !s.closest('#payModal')) || null;
+                }
+
+                const filterMethodeSelect = findSelectOutsideModal('methodeId');
+                const filterCaisseSelect = findSelectOutsideModal('caisseId');
+
+                filterMethodeSelect && filterMethodeSelect.addEventListener('change', function(){
+                    const val = this.value;
+                    const prev = filterCaisseSelect ? filterCaisseSelect.value : '';
+                    if(!val){
+                        populateCaisseOptionsInSelect(filterCaisseSelect, allCaisses, true);
+                        return;
+                    }
+                    fetchCaissesByMethode(val).then(data => {
+                        populateCaisseOptionsInSelect(filterCaisseSelect, data, true);
+                    }).catch(() => {
+                        populateCaisseOptionsInSelect(filterCaisseSelect, allCaisses, true);
+                    });
+                });
+
+                // on page load, if a methode filter is preselected, update the filter caisse list accordingly
+                if (filterMethodeSelect && filterMethodeSelect.value) {
+                    filterMethodeSelect.dispatchEvent(new Event('change'));
+                }
+
             })();
         </script>
     </div>
@@ -185,7 +278,7 @@
                 <select name="caisseId" class="form-control" style="width:160px">
                     <option value="">-- Caisse --</option>
                     <c:forEach var="c" items="${caisses}">
-                        <option value="${c.id}" ${filterCaisseId != null && filterCaisseId == c.id ? 'selected' : ''}>Caisse #${c.id}</option>
+                        <option value="${c.id}" ${filterCaisseId != null && filterCaisseId == c.id ? 'selected' : ''}>Caisse #${c.id}<c:if test="${not empty c.nomCaisse}"> - ${c.nomCaisse}</c:if></option>
                     </c:forEach>
                 </select>
 

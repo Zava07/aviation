@@ -106,6 +106,31 @@
             </ul>
         </nav>
         <nav class="nav-section">
+            <p class="nav-section-title">Gestion des Caisses</p>
+            <ul class="nav-menu">
+                <li class="nav-item has-submenu ${currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'passagers' ? 'open' : ''}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-wallet"></i>
+                        <span>Caisses</span>
+                    </a>
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/caisses" class="nav-link ${currentPage == 'caisses' ? 'active' : ''}">
+                                <i class="fas fa-cash-register"></i>
+                                <span>Caisses</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/mouvement-caisses" class="nav-link ${currentPage == 'mouvement-caisses' ? 'active' : ''}">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span>Mouvement Caisses</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <nav class="nav-section">
             <p class="nav-section-title">Gestion des Entites</p>
             <ul class="nav-menu">
                 <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' ? 'open' : ''}">

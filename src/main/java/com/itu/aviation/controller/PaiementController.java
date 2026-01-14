@@ -1,6 +1,7 @@
 package com.itu.aviation.controller;
 
 import com.itu.aviation.entity.Billet;
+import com.itu.aviation.entity.Caisse;
 import com.itu.aviation.entity.MouvementCaisse;
 import com.itu.aviation.entity.Paiement;
 import com.itu.aviation.entity.Reservation;
@@ -258,6 +259,14 @@ public class PaiementController {
         return mav;
     }
 
+    @GetMapping("/caisses/by-methode/{methodeId}")
+    @ResponseBody
+    public java.util.List<java.util.Map<String,Object>> getCaissesByMethode(@PathVariable Long methodeId) {
+        if (methodeId == null) return java.util.Collections.emptyList();
+        java.util.List<com.itu.aviation.entity.Caisse> cs = caisseService.findByMethodeId(methodeId);
+        return cs.stream().map(c -> java.util.Map.<String,Object>of("id", c.getId(), "nom", c.getNomCaisse())).collect(Collectors.toList());
+    }
+
     @PostMapping("/save-multiple")
     public String saveMultiple(@RequestParam Long reservationId,
                                @RequestParam(name = "methodeId") java.util.List<Long> methodeIds,
@@ -353,6 +362,13 @@ public class PaiementController {
                     creditTypeOpt.ifPresent(m::setTypeMouvementCaisse);
                     m.setDateMouvement(LocalDateTime.now());
                     mouvementCaisseService.create(m);
+                    Caisse c = m.getCaisse();
+                        if (c != null) {
+                            BigDecimal newSolde = c.getSolde() != null ? c.getSolde().add(amt) : amt;
+                            c.setSolde(newSolde);
+                            c.setDateLastMouv(LocalDateTime.now());
+                            caisseService.update(c.getId(), c);
+                        }
                     if(amt.compareTo(reste) > 0) {
                         List<StatusBillet> statusBillets = statusBilletService.findAll();
                         b.setStatusBillet(statusBillets.get(0));
@@ -390,6 +406,14 @@ public class PaiementController {
                 creditTypeOpt.ifPresent(m::setTypeMouvementCaisse);
                 m.setDateMouvement(LocalDateTime.now());
                 mouvementCaisseService.create(m);
+
+                Caisse c = m.getCaisse();;
+                if (c != null) {
+                    BigDecimal newSolde = c.getSolde() != null ? c.getSolde().add(amt) : amt;
+                    c.setSolde(newSolde);
+                    c.setDateLastMouv(LocalDateTime.now());
+                    caisseService.update(c.getId(), c);
+                }
             }
 
             redirect.addFlashAttribute("successMessage", "Paiement enregistré");

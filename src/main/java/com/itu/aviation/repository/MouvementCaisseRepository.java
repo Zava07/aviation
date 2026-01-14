@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface MouvementCaisseRepository extends JpaRepository<MouvementCaisse, Long> {
     List<MouvementCaisse> findByPaiementId(Long paiementId);
+    List<MouvementCaisse> findByCaisseId(Long caisseId);
+    List<MouvementCaisse> findByCaisseIdOrderByDateMouvementDesc(Long caisseId);
 } 
