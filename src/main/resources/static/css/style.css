@@ -420,6 +420,15 @@ ul {
     font-size: 0.85rem;
 }
 
+/* price list used in avion details */
+.price-list { margin: 0; padding-left: 16px; }
+.price-list li { margin: 2px 0; font-size: 0.95rem; }
+
+/* small stat-card tweaks for details view */
+.stat-card { min-width: 140px; padding: 12px; }
+.stat-card .stat-icon { width:48px; height:48px; }
+.stat-card .stat-info h3 { font-size: 1.25rem; margin:0; }
+
 /* ===== FILTER BAR ===== */
 .filter-bar {
     display: flex;

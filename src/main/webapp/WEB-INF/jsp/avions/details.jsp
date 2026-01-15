@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<% request.setAttribute("pageCss", "details.css"); %>
 <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
 
 <div class="card">
@@ -17,13 +18,31 @@
             <div>Point vol: <strong>${avion.pointVol}</strong></div>
         </div>
 
+        <div style="margin-bottom:12px">
+            <h5>Distribution sièges par classe</h5>
+            <div class="stats-grid">
+                <c:forEach var="sc" items="${seatCounts}">
+                    <c:set var="classeObj" value="${sc.classe}" />
+                    <c:set var="cnt" value="${sc.count}" />
+                    <div class="stat-card">
+                        <div class="stat-icon primary"><i class="fas fa-user"></i></div>
+                        <div class="stat-info">
+                            <small>${classeObj.nomClasse}</small>
+                            <h3>${cnt}</h3>
+                        </div>
+                    </div>
+                </c:forEach>
+            </div>
+        </div>
+
         <h5>Sièges</h5>
         <c:if test="${not empty sieges}">
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
-                        <tr><th>Numéro</th>
-                        <th>Classe</th>
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Classe</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,16 +60,15 @@
             <div class="alert alert-info">Aucun siège enregistré pour cet avion.</div>
         </c:if>
 
-        <h5 style="margin-top:16px">Instances de Vol (affectées à cet avion)</h5>
+        <h5 style="margin-top:16px">Vols associés</h5>
         <c:if test="${not empty volsWithMax}">
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Vol</th>
+                            <th>Prix par classe</th>
                             <th>Valeur max possible</th>
-                            
-                            
                         </tr>
                     </thead>
                     <tbody>
@@ -58,6 +76,15 @@
                             <c:set var="vol" value="${m.vol}" />
                             <tr>
                                 <td>${vol != null ? vol.numeroVol : ''}</td>
+                                <td>
+                                    <c:if test="${not empty m.prixParClasse}">
+                                        <ul class="price-list">
+                                            <c:forEach var="p" items="${m.prixParClasse}">
+                                                <li>${p.classe != null ? p.classe.nomClasse : ''} : <fmt:formatNumber value="${p.prix}" type="number" minFractionDigits="2" maxFractionDigits="2"/> MGA </li>
+                                            </c:forEach>
+                                        </ul>
+                                    </c:if>
+                                </td>
                                 <td><fmt:formatNumber value="${m.maxRevenue}" type="number" minFractionDigits="2" maxFractionDigits="2"/> MGA</td>
                             </tr>
                         </c:forEach>

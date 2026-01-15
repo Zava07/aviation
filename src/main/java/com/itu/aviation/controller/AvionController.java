@@ -208,6 +208,17 @@ public class AvionController {
             seatCountByClasse.put(cid, seatCountByClasse.getOrDefault(cid, 0L) + 1L);
         }
 
+        // prepare a list of classes with counts for dashboard
+        java.util.List<java.util.Map<String, Object>> seatCounts = new java.util.ArrayList<>();
+        java.util.List<com.itu.aviation.entity.Classe> allClasses = classeService.findAll();
+        for (com.itu.aviation.entity.Classe c : allClasses) {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("classe", c);
+            m.put("count", seatCountByClasse.getOrDefault(c.getId(), 0L));
+            seatCounts.add(m);
+        }
+        mav.addObject("seatCounts", seatCounts);
+
         for (com.itu.aviation.entity.Vol vol : vols) {
             java.math.BigDecimal max = java.math.BigDecimal.ZERO;
             Long volId = vol.getId();
@@ -224,6 +235,11 @@ public class AvionController {
             java.util.Map<String, Object> map = new java.util.HashMap<>();
             map.put("vol", vol);
             map.put("maxRevenue", max);
+            // gather prices per class for this vol to show in the view
+            java.util.List<com.itu.aviation.entity.PrixVolClasse> pricesForVol = allPrices.stream()
+                .filter(x -> x.getVol() != null && x.getVol().getId() != null && x.getVol().getId().equals(volId))
+                .toList();
+            map.put("prixParClasse", pricesForVol);
             volsWithMax.add(map);
         }
         mav.addObject("volsWithMax", volsWithMax);
