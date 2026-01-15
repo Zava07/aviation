@@ -110,6 +110,9 @@
                             </c:if>
             </table>
         </div>
+        <c:if test="${empty billets}">
+            <div class="alert alert-info">Aucun billet trouvé pour ces critères.</div>
+        </c:if>
     </div>
 </div>
 

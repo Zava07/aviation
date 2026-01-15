@@ -398,6 +398,23 @@ ul {
     font-weight: 700;
 }
 
+/* small caisse cards tweaks */
+.stat-card .stat-info { padding-right: 8px; }
+.stat-card .btn { padding: 6px 10px; border-radius: 8px; font-size: 0.85rem; }
+.stat-card small { color: var(--gray); }
+
+/* big stat card (dashboard header) */
+.big-stat-card { grid-column: 1 / -1; padding: 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.big-stat-card .stat-icon { width:72px; height:72px; border-radius:12px; font-size:1.6rem; }
+
+@media (min-width: 900px) {
+    .stats-grid { grid-template-columns: 2fr 1fr 1fr; }
+}
+@media (max-width: 899px) {
+    .big-stat-card { grid-column: 1 / -1; }
+    .stats-grid { grid-template-columns: 1fr; }
+}
+
 .stat-info p {
     color: var(--gray);
     font-size: 0.85rem;

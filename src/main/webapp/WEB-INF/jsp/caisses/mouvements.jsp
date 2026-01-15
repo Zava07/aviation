@@ -52,6 +52,9 @@
                     </c:forEach>
                 </tbody>
             </table>
+            <c:if test="${empty mouvements}">
+                <div class="alert alert-info">Aucun mouvement trouvé pour ces critères.</div>
+            </c:if>
         </div>
     </div>
 </div>

@@ -12,9 +12,10 @@
     -ajoute dans payement 
     - boucle dans payament details`
 
-3- Chiffre d'affaire 
+3- Chiffre d'affaire (OK)
     -Afficher le total par caisse
-
+    -Liste de mouvement par caisse , avec Filtrer
+    
 4-Passager 
     -CRUD , ajoute passager 
         -Read only

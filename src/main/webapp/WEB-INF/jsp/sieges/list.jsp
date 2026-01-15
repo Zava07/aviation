@@ -47,6 +47,11 @@
                     </tr>
                 </c:forEach>
                 </tbody>
+                <c:if test="${empty sieges}">
+                    <tfoot>
+                        <tr><td colspan="4" class="text-muted text-center">Aucun siège trouvé pour ces critères.</td></tr>
+                    </tfoot>
+                </c:if>
             </table>
         </div>
     </div>

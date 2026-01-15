@@ -56,6 +56,7 @@
                                 <td>${avion.capaciteCargo}</td>
                                 <td>${avion.etatAvion != null ? avion.etatAvion.etat : ''}</td>
                                 <td class="table-actions">
+                                    <a href="${pageContext.request.contextPath}/avions/details/${avion.id}" class="btn btn-sm btn-primary">Détails</a>
                                     <a href="${pageContext.request.contextPath}/avions/edit/${avion.id}" class="btn btn-sm btn-info">Voir</a>
                                     <a href="${pageContext.request.contextPath}/avions/delete/${avion.id}" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr ?')">Supprimer</a>
                                 </td>

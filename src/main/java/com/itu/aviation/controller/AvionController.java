@@ -41,6 +41,12 @@ public class AvionController {
     @Autowired
     private SiegeService siegeService;
 
+    @Autowired
+    private com.itu.aviation.service.VolInstanceService volInstanceService;
+
+    @Autowired
+    private com.itu.aviation.service.PrixVolClasseService prixVolClasseService;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String codeAvion,
                              @RequestParam(required = false) Long modeleId,
@@ -168,5 +174,60 @@ public class AvionController {
         avionService.delete(id);
         redirect.addFlashAttribute("errorMessage", "Avion supprimé");
         return new ModelAndView("redirect:/avions");
+    }
+
+    @GetMapping("/details/{id}")
+    public ModelAndView details(@PathVariable Long id) {
+        ModelAndView mav = new ModelAndView("avions/details");
+        mav.addObject("pageTitle", "Détails Avion");
+        mav.addObject("currentPage", "avions");
+        com.itu.aviation.entity.Avion avion = avionService.findById(id);
+        mav.addObject("avion", avion);
+
+        java.util.List<com.itu.aviation.entity.Siege> sieges = siegeService.findAll().stream()
+                .filter(s -> s.getAvion() != null && s.getAvion().getId() != null && s.getAvion().getId().equals(id))
+                .toList();
+        mav.addObject("sieges", sieges);
+
+        // collect distinct Vols for which this avion has at least one VolInstance
+        java.util.List<com.itu.aviation.entity.Vol> vols = volInstanceService.findAll().stream()
+            .filter(v -> v.getAvion() != null && v.getAvion().getId() != null && v.getAvion().getId().equals(id))
+            .map(v -> v.getVol())
+            .filter(v -> v != null && v.getId() != null)
+            .distinct()
+            .toList();
+
+        java.util.List<java.util.Map<String, Object>> volsWithMax = new java.util.ArrayList<>();
+        java.util.List<com.itu.aviation.entity.PrixVolClasse> allPrices = prixVolClasseService.findAll();
+
+        // precompute seat counts per classe for this avion
+        java.util.Map<Long, Long> seatCountByClasse = new java.util.HashMap<>();
+        for (com.itu.aviation.entity.Siege s : sieges) {
+            if (s.getClasse() == null || s.getClasse().getId() == null) continue;
+            Long cid = s.getClasse().getId();
+            seatCountByClasse.put(cid, seatCountByClasse.getOrDefault(cid, 0L) + 1L);
+        }
+
+        for (com.itu.aviation.entity.Vol vol : vols) {
+            java.math.BigDecimal max = java.math.BigDecimal.ZERO;
+            Long volId = vol.getId();
+            for (java.util.Map.Entry<Long, Long> e : seatCountByClasse.entrySet()) {
+            Long classeId = e.getKey();
+            Long count = e.getValue();
+            java.util.Optional<com.itu.aviation.entity.PrixVolClasse> p = allPrices.stream()
+                .filter(x -> x.getVol() != null && x.getVol().getId() != null && x.getVol().getId().equals(volId)
+                    && x.getClasse() != null && x.getClasse().getId() != null && x.getClasse().getId().equals(classeId))
+                .findFirst();
+            java.math.BigDecimal prix = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(java.math.BigDecimal.ZERO);
+            max = max.add(prix.multiply(new java.math.BigDecimal(count)));
+            }
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("vol", vol);
+            map.put("maxRevenue", max);
+            volsWithMax.add(map);
+        }
+        mav.addObject("volsWithMax", volsWithMax);
+
+        return mav;
     }
 }
