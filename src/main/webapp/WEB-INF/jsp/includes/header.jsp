@@ -134,6 +134,31 @@
             </ul>
         </nav>
         <nav class="nav-section">
+            <p class="nav-section-title">Gestion des Equipages</p>
+            <ul class="nav-menu">
+                <li class="nav-item has-submenu ${currentPage == 'equipages' || currentPage == 'affectations' ? 'open' : ''}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Equipages</span>
+                    </a>
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/equipages" class="nav-link ${currentPage == 'equipages' ? 'active' : ''}">
+                                <i class="fas fa-user-friends"></i>
+                                <span>Equipages</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/affectations" class="nav-link ${currentPage == 'affectations' ? 'active' : ''}">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Affectations</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <nav class="nav-section">
             <p class="nav-section-title">Gestion des Entites</p>
             <ul class="nav-menu">
                 <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' ? 'open' : ''}">
