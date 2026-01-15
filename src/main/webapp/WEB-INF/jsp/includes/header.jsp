@@ -161,12 +161,18 @@
         <nav class="nav-section">
             <p class="nav-section-title">Gestion des Entites</p>
             <ul class="nav-menu">
-                <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' ? 'open' : ''}">
+                <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' || currentPage == 'configurations' ? 'open' : ''}">
                     <a href="#" class="nav-link">
                         <i class="fas fa-cogs"></i>
                         <span>Entites</span>
                     </a>
                     <ul class="submenu">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/configurations" class="nav-link ${currentPage == 'configurations' ? 'active' : ''}">
+                                <i class="fas fa-sliders-h"></i>
+                                <span>Configuration</span>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="${pageContext.request.contextPath}/personnel" class="nav-link ${currentPage == 'personnel' ? 'active' : ''}">
                                 <i class="fas fa-user-tie"></i>

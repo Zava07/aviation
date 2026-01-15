@@ -71,6 +71,12 @@ public class ReservationController {
     @Autowired
     private com.itu.aviation.repository.StatusBilletRepository statusBilletRepository;
 
+    @Autowired
+    private com.itu.aviation.service.ConfigService configService;
+
+    @Autowired
+    private com.itu.aviation.service.FidelitePassagerService fidelitePassagerService;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String numero,
             @RequestParam(required = false) String passager,
@@ -412,6 +418,27 @@ public class ReservationController {
             r.setStatutReservation(confirmStatut);
             reservationService.update(id, r);
 
+            // ========== AJOUT DES POINTS DE FIDÉLITÉ ==========
+            if (r.getPassager() != null) {
+                // Récupérer les points depuis la configuration
+                Integer pointsConfig = configService.getPointsFidelite();
+                
+                if (pointsConfig != null && pointsConfig > 0) {
+                    com.itu.aviation.entity.Passager passager = r.getPassager();
+                    
+                    // Ajouter les points au total du passager
+                    Integer currentPoints = passager.getFidelite() != null ? passager.getFidelite() : 0;
+                    passager.setFidelite(currentPoints + pointsConfig);
+                    passagerService.update(passager.getId(), passager);
+                    
+                    // Créer une entrée dans fidelite_passager pour l'historique
+                    // Utiliser la date de réservation comme date d'obtention des points
+                    java.time.LocalDateTime dateReservation = r.getDateReservation();
+                    fidelitePassagerService.addPoints(passager, pointsConfig, dateReservation);
+                }
+            }
+            // ==================================================
+
             // create billet if none exists
             boolean exists = billetRepository.findAll().stream().anyMatch(b -> b.getReservation() != null && b.getReservation().getId().equals(id));
                 if (!exists) {
@@ -427,7 +454,13 @@ public class ReservationController {
                 billetRepository.save(b);
             }
 
-            redirect.addFlashAttribute("successMessage", "Réservation confirmée et billet créé");
+            // Message avec les points gagnés
+            Integer pointsGagnes = configService.getPointsFidelite();
+            String message = "Réservation confirmée et billet créé";
+            if (pointsGagnes != null && pointsGagnes > 0 && r.getPassager() != null) {
+                message += " - " + pointsGagnes + " point(s) de fidélité ajouté(s) à " + r.getPassager().getNom() + " " + r.getPassager().getPrenom();
+            }
+            redirect.addFlashAttribute("successMessage", message);
         } catch (Exception ex) {
             redirect.addFlashAttribute("errorMessage", "Impossible de confirmer la réservation: " + ex.getMessage());
         }

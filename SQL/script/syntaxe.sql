@@ -1,4 +1,13 @@
 -- =====================================================
+-- CONFIG
+-- =====================================================
+CREATE TABLE config (
+    id_config SERIAL PRIMARY KEY,
+    point_fidelite INT NOT NULL,
+    date_modification TIMESTAMP DEFAULT NOW()
+);
+
+-- =====================================================
 -- MODELE_AVION
 -- =====================================================
 CREATE TABLE modele_avion (
@@ -152,6 +161,16 @@ CREATE TABLE passager (
     fidelite INT DEFAULT 0
 );
 
+-- =====================================================
+-- Fidelite pssager
+-- =====================================================
+CREATE table fidelite_passager(
+    id_fidelite_passager SERIAL PRIMARY KEY,
+    id_passager INT NOT NULL REFERENCES passager(id_passager),
+    points INT NOT NULL,
+    date_obtention TIMESTAMP DEFAULT NOW()
+
+);
 -- =====================================================
 -- STATUT RESERVATION
 -- =====================================================

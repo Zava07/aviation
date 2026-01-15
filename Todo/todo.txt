@@ -16,7 +16,7 @@
     -Afficher le total par caisse
     -Liste de mouvement par caisse , avec Filtrer
     
-4-Passager 
+4-Passager (OK)
     -CRUD , ajoute passager 
         -Read only
         -Update fideliter
@@ -30,7 +30,7 @@
         -ajout un vol Instance
         
     
-6-Equipage  / vol
+6-Equipage  / vol (OK)
     -Initer des equipage a une vol 
 
 7-Gestion de bagage
