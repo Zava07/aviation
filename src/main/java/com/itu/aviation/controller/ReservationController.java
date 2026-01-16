@@ -558,6 +558,28 @@ public class ReservationController {
         }
 
         // Return base price directly without dynamic adjustments
+        // If selected category has a percentage reduction, apply it relative to Adulte base price
+        if (desiredCatId != null) {
+            try {
+                com.itu.aviation.entity.CategoriePassager desiredCat = categoriePassagerService.findById(desiredCatId);
+                java.math.BigDecimal pct = desiredCat.getPourcentageReduction();
+                if (pct != null) {
+                    Optional<com.itu.aviation.entity.PrixVolClasse> adultePriceOpt = prixVolClasseService.findAll().stream()
+                        .filter(x -> x.getVol() != null && r.getVol()!=null && r.getVol().getVol()!=null && x.getVol().getId().equals(r.getVol().getVol().getId())
+                            && x.getClasse() != null && r.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId())
+                            && x.getCategoriePassager() != null && "Adulte".equalsIgnoreCase(x.getCategoriePassager().getCategorie()))
+                        .findFirst();
+
+                    java.math.BigDecimal adulteBase = adultePriceOpt.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(base);
+                    if (adulteBase == null) adulteBase = java.math.BigDecimal.ZERO;
+                    java.math.BigDecimal computed = adulteBase.multiply(pct).divide(new java.math.BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
+                    return computed.setScale(2, RoundingMode.HALF_UP);
+                }
+            } catch (Exception ex) {
+                // ignore and fallback to base
+            }
+        }
+
         return base.setScale(2, RoundingMode.HALF_UP);
     }
 }

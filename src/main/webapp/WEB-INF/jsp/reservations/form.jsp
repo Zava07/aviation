@@ -174,14 +174,46 @@
                 </c:forEach>
             </c:forEach>
 
+            // Build categoryInfo with pourcentageReduction for each category
+            const categoryInfo = {};
+            <c:forEach var="c" items="${categories}">
+                categoryInfo['${c.id}'] = {
+                    nom: '${c.categorie}',
+                    pourcentage: <c:choose><c:when test="${c.pourcentageReduction != null}">${c.pourcentageReduction}</c:when><c:otherwise>null</c:otherwise></c:choose>
+                };
+            </c:forEach>
+
+            // Find Adulte category ID
+            let adulteCatId = null;
+            for(const [cid, info] of Object.entries(categoryInfo)){
+                if(info.nom && info.nom.toLowerCase() === 'adulte'){
+                    adulteCatId = cid;
+                    break;
+                }
+            }
+
             const categorieSelect = document.getElementById('categorieId');
             function updateSeatPricesForCategory(catId){
+                const catInfo = categoryInfo[catId];
+                const pct = catInfo ? catInfo.pourcentage : null;
+
                 seatButtons.forEach(b => {
                     const classId = b.getAttribute('data-classe');
                     let newPrice = null;
-                    if(priceMatrix[classId] && priceMatrix[classId][catId]){
+
+                    if(pct !== null && adulteCatId !== null){
+                        // Category has a percentage reduction -> price = adultePrice * pct / 100
+                        let adultePrice = priceMatrix[classId] && priceMatrix[classId][adulteCatId] ? priceMatrix[classId][adulteCatId] : null;
+                        if(adultePrice === null){
+                            // fallback to default price as adulte base
+                            adultePrice = parseFloat(b.getAttribute('data-default-price') || '0');
+                        }
+                        newPrice = adultePrice * pct / 100;
+                    } else if(priceMatrix[classId] && priceMatrix[classId][catId]){
+                        // Category-specific price exists
                         newPrice = priceMatrix[classId][catId];
                     }
+
                     if(newPrice !== null){
                         b.setAttribute('data-price', parseFloat(newPrice));
                     } else {

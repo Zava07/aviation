@@ -150,13 +150,18 @@ INSERT INTO type_passager (type) VALUES
 ('Entreprise');
 
 -- =====================================================
--- PASSAGER
+-- CATEGORIE PASSAGER
 -- =====================================================
 
 CREATE TABLE categorie_passager(
     id_categorie_passager SERIAL PRIMARY KEY,
-    categorie VARCHAR(50) NOT NULL
+    categorie VARCHAR(50) NOT NULL,
+    pourcentage_reduction NUMERIC(5,2) NULL
 );
+
+-- =====================================================
+-- PASSAGER
+-- =====================================================
 
 CREATE TABLE passager (
     id_passager SERIAL PRIMARY KEY,

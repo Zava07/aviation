@@ -1,6 +1,7 @@
 package com.itu.aviation.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,9 @@ public class CategoriePassager {
 
     @Column(name = "categorie", length = 50, nullable = false)
     private String categorie;
+
+    @Column(name = "pourcentage_reduction", precision = 5, scale = 2, nullable = true)
+    private BigDecimal pourcentageReduction;
 
     @OneToMany(mappedBy = "categoriePassager", fetch = FetchType.LAZY)
     private List<Passager> passagers = new ArrayList<>();
@@ -44,5 +48,13 @@ public class CategoriePassager {
 
     public void setPassagers(List<Passager> passagers) {
         this.passagers = passagers;
+    }
+
+    public BigDecimal getPourcentageReduction() {
+        return pourcentageReduction;
+    }
+
+    public void setPourcentageReduction(BigDecimal pourcentageReduction) {
+        this.pourcentageReduction = pourcentageReduction;
     }
 }

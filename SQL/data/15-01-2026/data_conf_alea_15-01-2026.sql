@@ -22,9 +22,10 @@ INSERT INTO type_passager(type) VALUES
 ('Individuel'),
 ('Entreprise');
 
-INSERT INTO categorie_passager(categorie) VALUES
-('Adulte'),
-('Enfant');
+INSERT INTO categorie_passager(categorie, pourcentage_reduction) VALUES
+('Adulte' , NULL),
+('Enfant', NULL),
+('Bebe', 10);
 
 INSERT INTO statut_reservation(nom_status) VALUES
 ('Confirme'),
