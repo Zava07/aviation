@@ -95,6 +95,40 @@
         <c:if test="${empty volsWithMax}">
             <div class="alert alert-info">Aucun vol associé à cet avion.</div>
         </c:if>
+        
+        <h5 style="margin-top:16px">Instances de Vol associées</h5>
+        <c:if test="${not empty volInstances}">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Vol</th>
+                            <th>CA</th>
+                            <th>Date Départ</th>
+                            <th>Date Arrivée</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:forEach var="vi" items="${volInstances}">
+                            <tr>
+                                <td>${vi.id}</td>
+                                <td>${vi.vol != null ? vi.vol.numeroVol : ''}</td>
+                                <td>
+                                    <fmt:formatNumber value="${vi.totalPaidEmis}" type="number" minFractionDigits="2" maxFractionDigits="2"/>
+                                    &nbsp;MGA
+                                </td>
+                                <td><fmt:formatDate value="${vi.dateDepartDate}" pattern="dd/MM/yyyy HH:mm"/></td>
+                                <td><fmt:formatDate value="${vi.dateArriveeDate}" pattern="dd/MM/yyyy HH:mm"/></td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </div>
+        </c:if>
+        <c:if test="${empty volInstances}">
+            <div class="alert alert-info">Aucune instance de vol pour cet avion.</div>
+        </c:if>
     </div>
 </div>
 

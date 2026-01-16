@@ -152,13 +152,20 @@ INSERT INTO type_passager (type) VALUES
 -- =====================================================
 -- PASSAGER
 -- =====================================================
+
+CREATE TABLE categorie_passager(
+    id_categorie_passager SERIAL PRIMARY KEY,
+    categorie VARCHAR(50) NOT NULL
+);
+
 CREATE TABLE passager (
     id_passager SERIAL PRIMARY KEY,
     nom VARCHAR(50) NOT NULL,
     prenom VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE,
     id_type_passager INT NOT NULL REFERENCES type_passager(id_type_passager),
-    fidelite INT DEFAULT 0
+    fidelite INT DEFAULT 0,
+    id_categorie_passager INT REFERENCES categorie_passager(id_categorie_passager)
 );
 
 -- =====================================================
@@ -226,8 +233,9 @@ CREATE TABLE prix_vol_classe (
     id_prix SERIAL PRIMARY KEY,
     id_vol INT NOT NULL REFERENCES vol(id_vol),
     id_classe INT NOT NULL REFERENCES classe(id_classe),
+    id_categorie_passager INT REFERENCES categorie_passager(id_categorie_passager),
     prix NUMERIC(12,2) NOT NULL,
-    UNIQUE (id_vol, id_classe)
+    UNIQUE (id_vol, id_classe,id_categorie_passager)
 );
 
 -- =====================================================

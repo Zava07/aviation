@@ -20,6 +20,10 @@ public class PrixVolClasse {
     @JoinColumn(name = "id_classe", nullable = false)
     private Classe classe;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_categorie_passager")
+    private com.itu.aviation.entity.CategoriePassager categoriePassager;
+
     @Column(name = "prix", precision = 12, scale = 2, nullable = false)
     private BigDecimal prix;
 
@@ -56,5 +60,13 @@ public class PrixVolClasse {
 
     public void setPrix(BigDecimal prix) {
         this.prix = prix;
+    }
+
+    public com.itu.aviation.entity.CategoriePassager getCategoriePassager() {
+        return categoriePassager;
+    }
+
+    public void setCategoriePassager(com.itu.aviation.entity.CategoriePassager categoriePassager) {
+        this.categoriePassager = categoriePassager;
     }
 }

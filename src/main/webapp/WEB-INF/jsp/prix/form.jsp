@@ -26,6 +26,15 @@
                 </select>
             </div>
             <div>
+                <label>Catégorie Passager</label>
+                <select name="categoriePassager.id">
+                    <option value="">-- Aucune / Par défaut --</option>
+                    <c:forEach var="cat" items="${categories}">
+                        <option value="${cat.id}" ${editPrix.categoriePassager != null && editPrix.categoriePassager.id == cat.id ? 'selected' : ''}>${cat.categorie}</option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div>
                 <label>Prix</label>
                 <input type="number" step="0.01" name="prix" value="${editPrix.prix}" required />
             </div>

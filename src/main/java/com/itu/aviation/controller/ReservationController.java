@@ -60,6 +60,9 @@ public class ReservationController {
     private PrixVolClasseService prixVolClasseService;
 
     @Autowired
+    private com.itu.aviation.service.CategoriePassagerService categoriePassagerService;
+
+    @Autowired
     private AeroportRepository aeroportRepository;
     
     @Autowired
@@ -226,10 +229,41 @@ public class ReservationController {
             .filter(sv -> sv.getVolInstance() != null && sv.getVolInstance().getId().equals(selectedVol.getId()))
             .collect(java.util.stream.Collectors.toMap(sv -> sv.getSiege().getId(), sv -> sv));
 
-        // Prix par classe pour ce vol (prix are at Vol/route level)
-        Map<Long, BigDecimal> priceByClass = prixVolClasseService.findAll().stream()
+        // Load categories and build price matrix (classId -> (categorieId -> prix)) for this vol
+        java.util.List<com.itu.aviation.entity.CategoriePassager> categories = categoriePassagerService.findAll();
+        mav.addObject("categories", categories);
+
+        java.util.List<com.itu.aviation.entity.PrixVolClasse> allPrixForVol = prixVolClasseService.findAll().stream()
             .filter(p -> p.getVol() != null && p.getVol().getId().equals(selectedVol.getVol().getId()))
-            .collect(java.util.stream.Collectors.toMap(p -> p.getClasse().getId(), p -> p.getPrix()));
+            .toList();
+
+        java.util.Map<Long, java.util.Map<Long, BigDecimal>> priceMatrix = new java.util.HashMap<>();
+        for (com.itu.aviation.entity.PrixVolClasse p : allPrixForVol) {
+            if (p.getClasse() == null || p.getClasse().getId() == null) continue;
+            Long classeId = p.getClasse().getId();
+            Long catId = p.getCategoriePassager() != null ? p.getCategoriePassager().getId() : null;
+            priceMatrix.computeIfAbsent(classeId, k -> new java.util.HashMap<>());
+            if (catId != null) priceMatrix.get(classeId).put(catId, p.getPrix());
+        }
+        mav.addObject("priceMatrix", priceMatrix);
+
+        // Determine default category (prefer 'Adulte')
+        Long defaultCatId = null;
+        for (com.itu.aviation.entity.CategoriePassager c : categories) {
+            if (c.getCategorie() != null && "Adulte".equalsIgnoreCase(c.getCategorie())) {
+                defaultCatId = c.getId();
+                break;
+            }
+        }
+        if (defaultCatId == null && !categories.isEmpty()) defaultCatId = categories.get(0).getId();
+
+        // Prix par classe pour ce vol for default category
+        Map<Long, BigDecimal> priceByClass = new java.util.HashMap<>();
+        for (Map.Entry<Long, java.util.Map<Long, BigDecimal>> e : priceMatrix.entrySet()) {
+            Long classeId = e.getKey();
+            BigDecimal pr = e.getValue().getOrDefault(defaultCatId, BigDecimal.ZERO);
+            priceByClass.put(classeId, pr);
+        }
 
         // Préparer les DTOs des sièges
         List<Map<String, Object>> seats = new java.util.ArrayList<>();
@@ -307,6 +341,17 @@ public class ReservationController {
                 if (reservation.getPassager().getTypePassager() != null && reservation.getPassager().getTypePassager().getId() != null) {
                     Long tpId = reservation.getPassager().getTypePassager().getId();
                     typePassagerRepository.findById(tpId).ifPresent(tp -> reservation.getPassager().setTypePassager(tp));
+                }
+
+                // If categoriePassager id was bound from the form, replace with managed entity
+                if (reservation.getPassager().getCategoriePassager() != null && reservation.getPassager().getCategoriePassager().getId() != null) {
+                    Long cpId = reservation.getPassager().getCategoriePassager().getId();
+                    try {
+                        com.itu.aviation.entity.CategoriePassager cp = categoriePassagerService.findById(cpId);
+                        reservation.getPassager().setCategoriePassager(cp);
+                    } catch (Exception ex) {
+                        // ignore if not found
+                    }
                 }
 
                 if (nom != null || prenom != null || email != null) {
@@ -491,36 +536,28 @@ public class ReservationController {
 
     // Local copy of pricing logic (keeps behaviour in controller without exposing service internals)
     private BigDecimal computePriceLocal(Reservation r) {
+        final Long desiredCatId = (r.getPassager() != null && r.getPassager().getCategoriePassager() != null)
+            ? r.getPassager().getCategoriePassager().getId() : null;
+
         Optional<com.itu.aviation.entity.PrixVolClasse> p = prixVolClasseService.findAll().stream()
             .filter(x -> x.getVol() != null && r.getVol()!=null && r.getVol().getVol()!=null && x.getVol().getId().equals(r.getVol().getVol().getId())
-                && x.getClasse() != null && r.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
+                && x.getClasse() != null && r.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId())
+                && ((desiredCatId == null && x.getCategoriePassager() == null) || (x.getCategoriePassager() != null && desiredCatId != null && x.getCategoriePassager().getId().equals(desiredCatId))))
             .findFirst();
 
-        BigDecimal base = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(BigDecimal.ZERO);
-
-        BigDecimal timeFactor = BigDecimal.ZERO;
-        if (r.getVol() != null && r.getVol().getDateDepart() != null) {
-            long days = Math.max(0, java.time.Duration.between(java.time.LocalDateTime.now(), r.getVol().getDateDepart()).toDays());
-            if (days < 7) timeFactor = new BigDecimal("0.20");
-            else if (days < 30) timeFactor = new BigDecimal("0.10");
+        BigDecimal base = BigDecimal.ZERO;
+        if (p.isPresent()) {
+            base = p.get().getPrix();
+        } else {
+            // fallback: any price for this vol+class (ignore category)
+            Optional<com.itu.aviation.entity.PrixVolClasse> any = prixVolClasseService.findAll().stream()
+                .filter(x -> x.getVol() != null && r.getVol()!=null && r.getVol().getVol()!=null && x.getVol().getId().equals(r.getVol().getVol().getId())
+                    && x.getClasse() != null && r.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
+                .findFirst();
+            base = any.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(BigDecimal.ZERO);
         }
 
-        BigDecimal occupancyFactor = BigDecimal.ZERO;
-        if (r.getVol() != null) {
-            java.util.List<com.itu.aviation.entity.SiegeVol> all = siegeVolService.findByVolInstance_Id(r.getVol().getId());
-            long total = all.size();
-            long occupied = all.stream().filter(sv -> {
-                String st = sv.getStatusSiegeVol() != null ? sv.getStatusSiegeVol().getStatus() : "";
-                return !st.equalsIgnoreCase("Libre") && !st.equalsIgnoreCase("Free");
-            }).count();
-            if (total > 0) {
-                double rate = (double) occupied / (double) total;
-                if (rate > 0.8) occupancyFactor = new BigDecimal("0.25");
-                else if (rate > 0.6) occupancyFactor = new BigDecimal("0.10");
-            }
-        }
-
-        BigDecimal multiplier = BigDecimal.ONE.add(timeFactor).add(occupancyFactor);
-        return base.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
+        // Return base price directly without dynamic adjustments
+        return base.setScale(2, RoundingMode.HALF_UP);
     }
 }
