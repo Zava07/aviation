@@ -140,6 +140,70 @@
                             <a href="${pageContext.request.contextPath}/reservations" class="btn btn-secondary">Annuler</a>
                         </div>
                     </form>
+
+                    <!-- ========== SECTION RÉSERVATION MULTIPLE ========== -->
+                    <hr/>
+                    <h4>Réservation Multiple (Attribution automatique des sièges)</h4>
+                    <p>Ajoutez des lignes (classe, catégorie, nombre de places). Les sièges libres seront attribués automatiquement.</p>
+                    <form method="post" action="${pageContext.request.contextPath}/reservations/save-multiple" id="multiReservationForm">
+                        <input type="hidden" name="volInstanceId" value="${selectedVol.id}" />
+
+                        <div class="form-group">
+                            <label>Date de réservation</label>
+                            <input type="datetime-local" name="dateReservation" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label>Nom</label>
+                            <input type="text" name="passagerNom" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom</label>
+                            <input type="text" name="passagerPrenom" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="passagerEmail" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Statut de la réservation</label>
+                            <select name="statutId" class="form-control">
+                                <option value="">-- Par défaut (En attente) --</option>
+                                <c:forEach var="s" items="${statusList}">
+                                    <option value="${s.id}">${s.nomStatus}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <table class="table table-bordered" id="multiLinesTable">
+                            <thead>
+                                <tr>
+                                    <th>Classe</th>
+                                    <th>Catégorie</th>
+                                    <th>Nombre</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Total ligne</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" style="text-align:right"><strong>Total global:</strong></td>
+                                    <td id="globalTotal">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addLineBtn">+ Ajouter une ligne</button>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Valider Réservations Multiples</button>
+                        </div>
+                    </form>
+                    <!-- ========== FIN SECTION RÉSERVATION MULTIPLE ========== -->
                 </div>
             </div>
         </c:if>
@@ -173,6 +237,8 @@
                     priceMatrix['${entry.key}']['${inner.key}'] = ${inner.value};
                 </c:forEach>
             </c:forEach>
+            // Expose to global scope for multi-reservation use
+            window.priceMatrix = priceMatrix;
 
             // Build categoryInfo with pourcentageReduction for each category
             const categoryInfo = {};
@@ -182,6 +248,7 @@
                     pourcentage: <c:choose><c:when test="${c.pourcentageReduction != null}">${c.pourcentageReduction}</c:when><c:otherwise>null</c:otherwise></c:choose>
                 };
             </c:forEach>
+            window.categoryInfo = categoryInfo;
 
             // Find Adulte category ID
             let adulteCatId = null;
@@ -191,6 +258,7 @@
                     break;
                 }
             }
+            window.adulteCatId = adulteCatId;
 
             const categorieSelect = document.getElementById('categorieId');
             function updateSeatPricesForCategory(catId){
@@ -265,6 +333,160 @@
                     btn.classList.add('selected');
                 }
                 updateSelectionDisplay();
+            });
+        });
+    })();
+
+    // ========== MULTI-RESERVATION JS ==========
+    (function(){
+        const addLineBtn = document.getElementById('addLineBtn');
+        const tableBody = document.querySelector('#multiLinesTable tbody');
+        const globalTotalEl = document.getElementById('globalTotal');
+
+        // Helper: compute unit price for a given class and category
+        function computeUnitPrice(classId, catId){
+            const priceMatrix = window.priceMatrix || {};
+            const categoryInfo = window.categoryInfo || {};
+            const adulteCatId = window.adulteCatId;
+
+            if(!classId) return 0;
+
+            // 1) Check if explicit category price exists
+            if(catId && priceMatrix[classId] && priceMatrix[classId][catId] !== undefined){
+                return parseFloat(priceMatrix[classId][catId]);
+            }
+
+            // 2) If category has pourcentageReduction, apply it to Adulte price
+            const catInfo = categoryInfo[catId];
+            if(catInfo && catInfo.pourcentage != null && adulteCatId){
+                let adultePrice = priceMatrix[classId] && priceMatrix[classId][adulteCatId] !== undefined
+                    ? parseFloat(priceMatrix[classId][adulteCatId]) : 0;
+                return adultePrice * (parseFloat(catInfo.pourcentage) / 100);
+            }
+
+            // 3) Fallback: use any price for this class (first available)
+            if(priceMatrix[classId]){
+                const vals = Object.values(priceMatrix[classId]);
+                if(vals.length) return parseFloat(vals[0]);
+            }
+            return 0;
+        }
+
+        function updateGlobalTotal(){
+            let total = 0;
+            tableBody.querySelectorAll('tr').forEach(tr => {
+                const lineTotalEl = tr.querySelector('.line-total');
+                if(lineTotalEl) total += parseFloat(lineTotalEl.textContent) || 0;
+            });
+            globalTotalEl.textContent = total.toFixed(2);
+        }
+
+        function createLineRow(){
+            const tr = document.createElement('tr');
+
+            // Classe select
+            const classeTd = document.createElement('td');
+            const selectClasse = document.createElement('select');
+            selectClasse.name = 'linesClassId';
+            selectClasse.className = 'form-control';
+            selectClasse.required = true;
+            selectClasse.innerHTML = '<option value="">-- Classe --</option>';
+            <c:forEach var="cl" items="${classes}">
+                selectClasse.innerHTML += '<option value="${cl.id}">${cl.nomClasse}</option>';
+            </c:forEach>
+            classeTd.appendChild(selectClasse);
+
+            // Catégorie select
+            const catTd = document.createElement('td');
+            const selectCat = document.createElement('select');
+            selectCat.name = 'linesCategorieId';
+            selectCat.className = 'form-control';
+            selectCat.innerHTML = '<option value="">-- Catégorie --</option>';
+            <c:forEach var="c" items="${categories}">
+                selectCat.innerHTML += '<option value="${c.id}">${c.categorie}</option>';
+            </c:forEach>
+            catTd.appendChild(selectCat);
+
+            // Quantité
+            const qtyTd = document.createElement('td');
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number'; qtyInput.name = 'linesQty'; qtyInput.min = '1'; qtyInput.value = '1';
+            qtyInput.className = 'form-control'; qtyInput.required = true;
+            qtyTd.appendChild(qtyInput);
+
+            // Prix unitaire (read-only display + hidden input to send to server)
+            const unitPriceTd = document.createElement('td');
+            const unitPriceSpan = document.createElement('span');
+            unitPriceSpan.className = 'unit-price';
+            unitPriceSpan.textContent = '0.00';
+            const hiddenPriceInput = document.createElement('input');
+            hiddenPriceInput.type = 'hidden';
+            hiddenPriceInput.name = 'linesPrice';
+            hiddenPriceInput.value = '0';
+            unitPriceTd.appendChild(unitPriceSpan);
+            unitPriceTd.appendChild(hiddenPriceInput);
+
+            // Total ligne (read-only display)
+            const lineTotalTd = document.createElement('td');
+            const lineTotalSpan = document.createElement('span');
+            lineTotalSpan.className = 'line-total';
+            lineTotalSpan.textContent = '0.00';
+            lineTotalTd.appendChild(lineTotalSpan);
+
+            // Supprimer button
+            const rmTd = document.createElement('td');
+            const rmBtn = document.createElement('button');
+            rmBtn.type = 'button'; rmBtn.className = 'btn btn-sm btn-danger'; rmBtn.textContent = 'Supprimer';
+            rmBtn.addEventListener('click', () => { tr.remove(); updateGlobalTotal(); });
+            rmTd.appendChild(rmBtn);
+
+            tr.appendChild(classeTd);
+            tr.appendChild(catTd);
+            tr.appendChild(qtyTd);
+            tr.appendChild(unitPriceTd);
+            tr.appendChild(lineTotalTd);
+            tr.appendChild(rmTd);
+
+            function updateRowPrice(){
+                const classId = selectClasse.value;
+                const catId = selectCat.value;
+                const qty = parseInt(qtyInput.value) || 1;
+                const unitPrice = computeUnitPrice(classId, catId);
+                const lineTotal = unitPrice * qty;
+                unitPriceSpan.textContent = unitPrice.toFixed(2);
+                hiddenPriceInput.value = unitPrice.toFixed(2); // Send unit price to server
+                lineTotalSpan.textContent = lineTotal.toFixed(2);
+                updateGlobalTotal();
+            }
+
+            selectClasse.addEventListener('change', updateRowPrice);
+            selectCat.addEventListener('change', updateRowPrice);
+            qtyInput.addEventListener('input', updateRowPrice);
+
+            // Initialize
+            updateRowPrice();
+            return tr;
+        }
+
+        addLineBtn.addEventListener('click', function(){
+            tableBody.appendChild(createLineRow());
+        });
+
+        // Add one initial row
+        tableBody.appendChild(createLineRow());
+        
+        // DEBUG: Log form data before submit
+        document.getElementById('multiReservationForm').addEventListener('submit', function(e) {
+            const formData = new FormData(this);
+            console.log('=== FORM DATA DEBUG ===');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
+            // Check hidden inputs specifically
+            const hiddenPrices = document.querySelectorAll('input[name="linesPrice"]');
+            console.log('Hidden price inputs found:', hiddenPrices.length);
+            hiddenPrices.forEach((input, idx) => {
+                console.log('linesPrice[' + idx + '] value:', input.value);
             });
         });
     })();

@@ -432,6 +432,100 @@ public class PaiementController {
         return "redirect:/paiements";
     }
 
+    @PostMapping("/pay-all-billets")
+    public String payAllBillets(@RequestParam Long methodeId,
+                                @RequestParam Long deviseId,
+                                @RequestParam Long caisseId,
+                                RedirectAttributes redirect) {
+        try {
+            List<Billet> allBillets = billetService.findAll();
+            List<StatusBillet> statusBillets = statusBilletService.findAll();
+            StatusBillet payeStatus = statusBillets.stream()
+                .filter(s -> s.getStatus() != null && s.getStatus().toLowerCase().contains("pay"))
+                .findFirst().orElse(statusBillets.isEmpty() ? null : statusBillets.get(0));
+            
+            List<StatusPaiement> statusPaiementList = statusPaiementService.findAll();
+            StatusPaiement payeStatusPaiement = statusPaiementList.size() > 1 ? statusPaiementList.get(1) : (statusPaiementList.isEmpty() ? null : statusPaiementList.get(0));
+            
+            List<TypeMouvementCaisse> types = typeMouvementCaisseService.findAll();
+            TypeMouvementCaisse creditType = types.stream()
+                .filter(t -> "credit".equalsIgnoreCase(t.getType()))
+                .findFirst().orElse(null);
+            
+            Caisse caisse = caisseService.findById(caisseId);
+            int count = 0;
+            
+            for (Billet b : allBillets) {
+                // verifier si le billet est deja paye
+                if (b.getStatusBillet() != null && b.getStatusBillet().getStatus() != null 
+                    && b.getStatusBillet().getStatus().toLowerCase().contains("pay")) {
+                    continue;
+                }
+                
+                // verifier si paiement existe deja
+                List<Paiement> existingPaiements = paiementService.findByBilletId(b.getId());
+                if (existingPaiements != null && !existingPaiements.isEmpty()) {
+                    // verifier si totalement paye
+                    Paiement existingP = existingPaiements.get(0);
+                    List<MouvementCaisse> mouvs = mouvementCaisseService.findByPaiementId(existingP.getId());
+                    BigDecimal totalPaid = BigDecimal.ZERO;
+                    for (MouvementCaisse m : mouvs) {
+                        if (m.getMontant() != null) totalPaid = totalPaid.add(m.getMontant());
+                    }
+                    if (b.getPrixFinal() != null && totalPaid.compareTo(b.getPrixFinal()) >= 0) {
+                        continue; // deja paye
+                    }
+                }
+                
+                BigDecimal montant = b.getPrixFinal();
+                if (montant == null || montant.compareTo(BigDecimal.ZERO) <= 0) continue;
+                
+                Reservation res = b.getReservation();
+                
+                // creer paiement
+                Paiement p = new Paiement();
+                p.setReservation(res);
+                p.setBillet(b);
+                p.setMontant(montant);
+                p.setMethodePaiement(methodePaiementService.findById(methodeId));
+                p.setDevise(deviseService.findById(deviseId));
+                p.setStatusPaiement(payeStatusPaiement);
+                p.setDatePaiement(LocalDateTime.now());
+                paiementService.create(p);
+                
+                // creer mouvement caisse
+                MouvementCaisse m = new MouvementCaisse();
+                m.setPaiement(p);
+                m.setCaisse(caisse);
+                m.setMontant(montant);
+                m.setTypeMouvementCaisse(creditType);
+                m.setDateMouvement(LocalDateTime.now());
+                MouvementCaisse saved = mouvementCaisseService.create(m);
+                
+                // mettre a jour solde caisse
+                if (caisse != null) {
+                    BigDecimal current = caisse.getSolde() != null ? caisse.getSolde() : BigDecimal.ZERO;
+                    caisse.setSolde(current.add(montant));
+                    caisse.setDateLastMouv(LocalDateTime.now());
+                    caisseService.update(caisse.getId(), caisse);
+                }
+                
+                // mettre a jour status billet
+                if (payeStatus != null) {
+                    b.setStatusBillet(payeStatus);
+                    billetService.update(b.getId(), b);
+                }
+                
+                count++;
+            }
+            
+            redirect.addFlashAttribute("successMessage", count + " billet(s) payé(s) avec succès");
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("errorMessage", "Erreur lors du paiement: " + ex.getMessage());
+        }
+        return "redirect:/billets";
+    }
+
     @PostMapping("/rembourser/{billetId}")
     public String rembourserBillet(@PathVariable Long billetId,
                                    RedirectAttributes redirect) {

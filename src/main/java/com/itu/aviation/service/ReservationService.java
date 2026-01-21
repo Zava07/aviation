@@ -114,8 +114,9 @@ public class ReservationService {
             r.setDateReservation(LocalDateTime.now());
         }
 
-        // compute price if class/vol present
-        if (r.getVol() != null && r.getClasse() != null) {
+        // compute price ONLY if not already set and class/vol present
+        if ((r.getPrix() == null || r.getPrix().compareTo(BigDecimal.ZERO) == 0) 
+                && r.getVol() != null && r.getClasse() != null) {
             r.setPrix(computePrice(r));
         }
 

@@ -132,6 +132,17 @@
                     </tfoot>
                 </c:if>
             </table>
+
+            <!-- Bouton Confirmer et Payer Tous -->
+            <c:if test="${not empty reservations}">
+                <div class="mt-3" style="text-align:right">
+                    <form method="post" action="${pageContext.request.contextPath}/reservations/confirm-all" style="display:inline">
+                        <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('Confirmer et payer TOUTES les réservations en attente ?')">
+                            <i class="fas fa-check-double"></i> Confirmer et Payer Tous
+                        </button>
+                    </form>
+                </div>
+            </c:if>
         </div>
     </div>
 </div>
