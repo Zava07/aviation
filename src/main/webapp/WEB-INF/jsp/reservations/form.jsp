@@ -62,11 +62,16 @@
             <div class="row">
                 <div style="width:60%">
                     <h4>Disposition des sièges</h4>
-                    <div id="seatMap" style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <div id="seatMap">
                         <c:forEach var="s" items="${seats}">
-                            <c:set var="status" value="${s.status}" />
-                            <c:set var="selectable" value="${s.selectable}" />
-                            <button class="seat-btn status-${fn:toLowerCase(status)}" data-id="${s.id}" data-status="${status}" data-classe="${s.classeId}" data-price="${s.price}" data-default-price="${s.price}" ${!selectable ? 'disabled' : ''}>${s.numero}<br/><small>${s.classeNom}</small></button>
+                            <c:if test="${not empty s.numero}">
+                                <c:set var="status" value="${s.status}" />
+                                <c:set var="selectable" value="${s.selectable}" />
+                                <button class="seat-btn status-${fn:toLowerCase(status)}" data-id="${s.id}" data-status="${status}" data-classe="${s.classeId}" data-price="${s.price}" data-default-price="${s.price}" ${!selectable ? 'disabled' : ''}>
+                                    <span class="seat-number">${s.numero}</span>
+                                    <span class="seat-class">${s.classeNom}</span>
+                                </button>
+                            </c:if>
                         </c:forEach>
                     </div>
                 </div>
@@ -231,7 +236,7 @@
                         <div class="multi-footer">
                             <div class="total-section">
                                 <div class="total-label">Total Global</div>
-                                <div class="total-amount" id="globalTotal">0.00 Ar</div>
+                                <div class="total-amount" id="globalTotal">0.00 MGA</div>
                             </div>
                             <button type="submit" class="btn btn-success btn-lg">
                                 <i class="fas fa-check-circle"></i> Valider les Réservations
@@ -246,13 +251,289 @@
 </div>
 
 <style>
-    .seat-btn{padding:8px 10px;border:1px solid #ccc;background:#f7f7f7;border-radius:4px;cursor:pointer}
-    .seat-btn.selected{outline:3px solid #2b8a3e}
-    .seat-btn.status-libre{background:#e9f7ef}
-    .seat-btn.status-reserve{background:#fff3cd}
-    .seat-btn.status-bloque{background:#f8d7da;color:#7a1f1f;cursor:not-allowed}
-    .seat-btn.status-occupe{background:#e2e3e5;color:#6c757d;cursor:not-allowed}
-    .seat-btn[disabled]{opacity:0.6;cursor:not-allowed}
+    /* ========== STYLES PAGE RÉSERVATION ========== */
+    
+    /* Card principale */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+        padding: 20px 30px;
+        border: none;
+    }
+    
+    .card-header .card-title {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .card-body {
+        padding: 30px;
+        background: #f8fafc;
+    }
+
+    /* Section Filtres de recherche */
+    .form-row {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 24px;
+    }
+    
+    .form-row > div {
+        flex: 1;
+    }
+    
+    .form-row label {
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 8px;
+        display: block;
+        font-size: 0.9rem;
+    }
+    
+    .form-row .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+    
+    .form-row .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        outline: none;
+    }
+    
+    .form-row .btn-primary {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        white-space: nowrap;
+    }
+    
+    .form-row .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Sélection du vol */
+    .form-group.mt-3 {
+        background: white;
+        padding: 20px 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 30px;
+    }
+    
+    .form-group.mt-3 > label {
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    /* Layout principal: sièges + détails */
+    .row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .row > div:first-child {
+        flex: 0 0 60%;
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .row > div:last-child {
+        flex: 0 0 calc(40% - 30px);
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .row h4 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    /* Plan des sièges */
+    #seatMap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-height: 450px;
+        overflow-y: auto;
+        padding: 15px;
+        background: #f7fafc;
+        border-radius: 10px;
+        align-content: flex-start;
+    }
+    
+    .seat-btn {
+        width: 80px;
+        height: 65px;
+        padding: 8px 6px !important;
+        border: 2px solid #cbd5e0 !important;
+        background: #f7f7f7;
+        border-radius: 8px !important;
+        cursor: pointer;
+        text-align: center;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .seat-btn .seat-number {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #2d3748;
+        display: block;
+    }
+    
+    .seat-btn .seat-class {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: #718096;
+        display: block;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    
+    .seat-btn:hover:not([disabled]) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .seat-btn.selected {
+        outline: none !important;
+        border-color: #2b8a3e !important;
+        background: #c6f6d5 !important;
+        box-shadow: 0 0 0 3px rgba(43, 138, 62, 0.3);
+    }
+    
+    .seat-btn.selected .seat-number {
+        color: #22543d;
+    }
+    
+    .seat-btn.status-libre {
+        background: #e9f7ef;
+        border-color: #9ae6b4 !important;
+    }
+    
+    .seat-btn.status-reserve {
+        background: #fef3cd;
+        border-color: #fbd38d !important;
+    }
+    
+    .seat-btn.status-bloque {
+        background: #fed7d7;
+        border-color: #feb2b2 !important;
+        color: #c53030;
+        cursor: not-allowed;
+    }
+    
+    .seat-btn.status-occupe {
+        background: #e2e8f0;
+        border-color: #cbd5e0 !important;
+        color: #718096;
+        cursor: not-allowed;
+    }
+    
+    .seat-btn[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Formulaire détails passager */
+    #reservationForm .form-group {
+        margin-bottom: 18px;
+    }
+    
+    #reservationForm label {
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    #reservationForm .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+    
+    #reservationForm .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        outline: none;
+    }
+    
+    #chosenSeat, #chosenPrice {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2b8a3e;
+        background: #e9f7ef;
+        padding: 12px 16px;
+        border-radius: 8px;
+    }
+    
+    #reservationForm .btn-success {
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        border: none;
+        font-size: 1rem;
+    }
+    
+    #reservationForm .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 161, 105, 0.4);
+    }
+    
+    #reservationForm .btn-secondary {
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        margin-left: 10px;
+    }
 
     /* ========== STYLES RÉSERVATION MULTIPLE ========== */
     .multi-reservation-section {
@@ -291,6 +572,8 @@
         font-size: 1.5rem;
         font-weight: 700;
         color: #2d3748;
+        border: none;
+        padding: 0;
     }
 
     .multi-header-text p {
@@ -647,7 +930,7 @@
                 const lineTotalEl = tr.querySelector('.line-total');
                 if(lineTotalEl) total += parseFloat(lineTotalEl.textContent) || 0;
             });
-            globalTotalEl.textContent = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ar';
+            globalTotalEl.textContent = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' MGA';
         }
 
         function createLineRow(){
