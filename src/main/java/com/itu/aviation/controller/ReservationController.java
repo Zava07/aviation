@@ -80,6 +80,9 @@ public class ReservationController {
     @Autowired
     private com.itu.aviation.service.FidelitePassagerService fidelitePassagerService;
 
+    @Autowired
+    private com.itu.aviation.service.PopulariteVolService populariteVolService;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String numero,
             @RequestParam(required = false) String passager,
@@ -484,6 +487,23 @@ public class ReservationController {
             }
             // ==================================================
 
+            // ========== AJOUT DES POINTS DE POPULARITÉ AU VOL ==========
+            if (r.getVol() != null && r.getVol().getVol() != null) {
+                Integer pointsVolConfig = configService.getPointVol();
+                if (pointsVolConfig != null && pointsVolConfig > 0) {
+                    Vol vol = r.getVol().getVol();
+                    
+                    // Ajouter les points au total du vol
+                    Integer currentVolPoints = vol.getPointVol() != null ? vol.getPointVol() : 0;
+                    vol.setPointVol(currentVolPoints + pointsVolConfig);
+                    volService.update(vol.getId(), vol);
+                    
+                    // Créer une entrée dans popularite_vol pour l'historique
+                    populariteVolService.addPoints(vol, pointsVolConfig, r.getDateReservation());
+                }
+            }
+            // ===========================================================
+
             // create billet if none exists
             boolean exists = billetRepository.findAll().stream().anyMatch(b -> b.getReservation() != null && b.getReservation().getId().equals(id));
                 if (!exists) {
@@ -501,9 +521,13 @@ public class ReservationController {
 
             // Message avec les points gagnés
             Integer pointsGagnes = configService.getPointsFidelite();
+            Integer pointsVolGagnes = configService.getPointVol();
             String message = "Réservation confirmée et billet créé";
             if (pointsGagnes != null && pointsGagnes > 0 && r.getPassager() != null) {
                 message += " - " + pointsGagnes + " point(s) de fidélité ajouté(s) à " + r.getPassager().getNom() + " " + r.getPassager().getPrenom();
+            }
+            if (pointsVolGagnes != null && pointsVolGagnes > 0 && r.getVol() != null && r.getVol().getVol() != null) {
+                message += " - " + pointsVolGagnes + " point(s) de popularité ajouté(s) au vol " + r.getVol().getVol().getNumeroVol();
             }
             redirect.addFlashAttribute("successMessage", message);
         } catch (Exception ex) {
@@ -581,5 +605,316 @@ public class ReservationController {
         }
 
         return base.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    // ========== SAVE MULTIPLE RESERVATIONS WITH AUTO SEAT ASSIGNMENT ==========
+    @PostMapping("/save-multiple")
+    public String saveMultiple(@RequestParam Long volInstanceId,
+                               @RequestParam String passagerNom,
+                               @RequestParam String passagerPrenom,
+                               @RequestParam String passagerEmail,
+                               @RequestParam(required = false) Long statutId,
+                               @RequestParam(name = "dateReservation", required = false) String dateReservation,
+                               @RequestParam(name = "linesClassId") java.util.List<String> linesClassId,
+                               @RequestParam(name = "linesCategorieId", required = false) java.util.List<String> linesCategorieId,
+                               @RequestParam(name = "linesQty") java.util.List<String> linesQty,
+                               @RequestParam(name = "linesPrice", required = false) java.util.List<String> linesPrice,
+                               RedirectAttributes redirect) {
+        try {
+            // 1) Ensure or create passager
+            com.itu.aviation.entity.Passager passager = null;
+            java.util.Optional<com.itu.aviation.entity.Passager> existing = passagerService.findByNomPrenomEmail(
+                    passagerNom == null ? "" : passagerNom.trim(),
+                    passagerPrenom == null ? "" : passagerPrenom.trim(),
+                    passagerEmail == null ? "" : passagerEmail.trim());
+            if (existing.isPresent()) {
+                passager = existing.get();
+            } else {
+                com.itu.aviation.entity.Passager p = new com.itu.aviation.entity.Passager();
+                p.setNom(passagerNom);
+                p.setPrenom(passagerPrenom);
+                p.setEmail(passagerEmail);
+                // ensure required TypePassager is set (NOT NULL constraint)
+                java.util.List<com.itu.aviation.entity.TypePassager> tps = typePassagerRepository.findAll();
+                if (!tps.isEmpty()) p.setTypePassager(tps.get(0));
+                passager = passagerService.create(p);
+            }
+
+            com.itu.aviation.entity.VolInstance vi = volInstanceService.findById(volInstanceId);
+
+            // 2) Determine statut to apply
+            com.itu.aviation.entity.StatutReservation statut = null;
+            if (statutId != null) {
+                try { statut = statutReservationRepository.findById(statutId).orElse(null); } catch (Exception ex) { statut = null; }
+            }
+            if (statut == null) {
+                java.util.Optional<com.itu.aviation.entity.StatutReservation> opt = statutReservationRepository.findByNomStatusContainingIgnoreCase("en attente");
+                statut = opt.orElseGet(() -> statutReservationRepository.findAll().stream().findFirst().orElse(null));
+            }
+
+            // 3) Parse optional reservation date
+            java.time.LocalDateTime reservationDate = null;
+            if (dateReservation != null && !dateReservation.trim().isEmpty()) {
+                try { reservationDate = java.time.LocalDateTime.parse(dateReservation); } catch (Exception ex) { /* ignore */ }
+            }
+
+            // 4) Get all seats for this vol instance's avion, grouped by class
+            java.util.List<Siege> allSieges = siegeService.findAll().stream()
+                .filter(s -> s.getAvion() != null && vi.getAvion() != null && s.getAvion().getId().equals(vi.getAvion().getId()))
+                .toList();
+
+            // Get SiegeVol status map for this vol instance
+            java.util.Map<Long, SiegeVol> siegeVolMap = siegeVolService.findAll().stream()
+                .filter(sv -> sv.getVolInstance() != null && sv.getVolInstance().getId().equals(vi.getId()))
+                .collect(java.util.stream.Collectors.toMap(sv -> sv.getSiege().getId(), sv -> sv, (a, b) -> a));
+
+            // Get already reserved siege IDs for this vol instance
+            java.util.Set<Long> reservedSiegeIds = reservationService.findAll().stream()
+                .filter(r -> r.getVol() != null && r.getVol().getId().equals(vi.getId()) && r.getSiege() != null)
+                .map(r -> r.getSiege().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
+            // Build map: classeId -> list of free siege IDs
+            java.util.Map<Long, java.util.List<Long>> freeSeatsByClass = new java.util.HashMap<>();
+            for (Siege s : allSieges) {
+                Long classeId = s.getClasse() != null ? s.getClasse().getId() : null;
+                if (classeId == null) continue;
+
+                // Check SiegeVol status
+                SiegeVol sv = siegeVolMap.get(s.getId());
+                String status = "Libre";
+                if (sv != null && sv.getStatusSiegeVol() != null && sv.getStatusSiegeVol().getStatus() != null) {
+                    status = sv.getStatusSiegeVol().getStatus();
+                }
+                boolean isFree = "Libre".equalsIgnoreCase(status) || "Free".equalsIgnoreCase(status);
+
+                // Also check not already reserved
+                if (isFree && !reservedSiegeIds.contains(s.getId())) {
+                    freeSeatsByClass.computeIfAbsent(classeId, k -> new java.util.ArrayList<>()).add(s.getId());
+                }
+            }
+
+            // 5) Process each line and create reservations
+            int totalCreated = 0;
+            
+            // DEBUG: Log received data
+            System.out.println("[DEBUG save-multiple] linesClassId: " + linesClassId);
+            System.out.println("[DEBUG save-multiple] linesCategorieId: " + linesCategorieId);
+            System.out.println("[DEBUG save-multiple] linesQty: " + linesQty);
+            System.out.println("[DEBUG save-multiple] linesPrice: " + linesPrice);
+            
+            for (int i = 0; i < linesClassId.size(); i++) {
+                String cls = linesClassId.get(i);
+                if (cls == null || cls.trim().isEmpty()) continue;
+                Long classId = Long.parseLong(cls);
+
+                Long catId = null;
+                if (linesCategorieId != null && linesCategorieId.size() > i) {
+                    String c = linesCategorieId.get(i);
+                    if (c != null && !c.trim().isEmpty()) catId = Long.parseLong(c);
+                }
+
+                int qty = 1;
+                if (linesQty != null && linesQty.size() > i) {
+                    try { qty = Integer.parseInt(linesQty.get(i)); } catch (Exception ex) { qty = 1; }
+                }
+
+                // Get free seats for this class
+                java.util.List<Long> freeSeats = freeSeatsByClass.getOrDefault(classId, new java.util.ArrayList<>());
+                if (freeSeats.size() < qty) {
+                    com.itu.aviation.entity.Classe cl = classeService.findById(classId);
+                    String className = cl != null ? cl.getNomClasse() : ("ID " + classId);
+                    throw new IllegalStateException("Pas assez de sièges disponibles pour la classe " + className
+                            + ". Demandé: " + qty + ", Disponible: " + freeSeats.size());
+                }
+
+                // Compute price for this class+category
+                final Long desiredCatId = catId;
+                
+                // Get all prices for this vol and class
+                java.util.List<com.itu.aviation.entity.PrixVolClasse> pricesForVolClass = prixVolClasseService.findAll().stream()
+                        .filter(x -> x.getVol() != null && vi.getVol() != null && x.getVol().getId().equals(vi.getVol().getId())
+                                && x.getClasse() != null && x.getClasse().getId().equals(classId))
+                        .toList();
+
+                java.math.BigDecimal price = java.math.BigDecimal.ZERO;
+                boolean foundExactCategoryPrice = false;
+
+                // 1) First, try to find exact category price
+                if (desiredCatId != null) {
+                    for (com.itu.aviation.entity.PrixVolClasse pvc : pricesForVolClass) {
+                        if (pvc.getCategoriePassager() != null && pvc.getCategoriePassager().getId().equals(desiredCatId)) {
+                            price = pvc.getPrix();
+                            foundExactCategoryPrice = true;
+                            break;
+                        }
+                    }
+                }
+
+                // 2) If no exact category price found, check if category has percentage reduction
+                if (!foundExactCategoryPrice && desiredCatId != null) {
+                    try {
+                        com.itu.aviation.entity.CategoriePassager desiredCat = categoriePassagerService.findById(desiredCatId);
+                        java.math.BigDecimal pct = desiredCat.getPourcentageReduction();
+                        if (pct != null) {
+                            // Find Adulte price for this class
+                            java.math.BigDecimal adultePrice = null;
+                            for (com.itu.aviation.entity.PrixVolClasse pvc : pricesForVolClass) {
+                                if (pvc.getCategoriePassager() != null && "Adulte".equalsIgnoreCase(pvc.getCategoriePassager().getCategorie())) {
+                                    adultePrice = pvc.getPrix();
+                                    break;
+                                }
+                            }
+                            if (adultePrice != null) {
+                                price = adultePrice.multiply(pct).divide(new java.math.BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
+                                foundExactCategoryPrice = true; // Mark as found to avoid fallback
+                            }
+                        }
+                    } catch (Exception ex) { /* ignore */ }
+                }
+
+                // 3) Ultimate fallback: use first available price for this class (should rarely happen)
+                if (!foundExactCategoryPrice && !pricesForVolClass.isEmpty()) {
+                    price = pricesForVolClass.get(0).getPrix();
+                }
+
+                // 4) PREFER client-submitted price (like single reservation does)
+                System.out.println("[DEBUG save-multiple] Line " + i + ": classId=" + classId + ", catId=" + catId + ", qty=" + qty);
+                System.out.println("[DEBUG save-multiple] Line " + i + ": server computed price=" + price);
+                
+                if (linesPrice != null && linesPrice.size() > i) {
+                    String clientPriceStr = linesPrice.get(i);
+                    System.out.println("[DEBUG save-multiple] Line " + i + ": clientPriceStr=" + clientPriceStr);
+                    if (clientPriceStr != null && !clientPriceStr.trim().isEmpty()) {
+                        try {
+                            java.math.BigDecimal clientPrice = new java.math.BigDecimal(clientPriceStr.trim());
+                            System.out.println("[DEBUG save-multiple] Line " + i + ": parsed clientPrice=" + clientPrice);
+                            if (clientPrice.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                                price = clientPrice; // Use client-calculated price
+                                System.out.println("[DEBUG save-multiple] Line " + i + ": USING CLIENT PRICE=" + price);
+                            }
+                        } catch (Exception ex) { 
+                            System.out.println("[DEBUG save-multiple] Line " + i + ": parse error: " + ex.getMessage());
+                        }
+                    }
+                } else {
+                    System.out.println("[DEBUG save-multiple] Line " + i + ": linesPrice is null or too short");
+                }
+                
+                System.out.println("[DEBUG save-multiple] Line " + i + ": FINAL price=" + price);
+
+                // Create qty reservations with auto-assigned seats
+                for (int k = 0; k < qty; k++) {
+                    Long siegeId = freeSeats.remove(0); // Take and remove from available list
+                    Siege siege = siegeService.findById(siegeId);
+
+                    Reservation r = new Reservation();
+                    r.setPassager(passager);
+                    r.setVol(vi);
+                    r.setClasse(classeService.findById(classId));
+                    r.setSiege(siege);
+                    r.setStatutReservation(statut);
+                    if (reservationDate != null) r.setDateReservation(reservationDate);
+                    r.setPrix(price.setScale(2, java.math.RoundingMode.HALF_UP));
+
+                    reservationService.create(r);
+                    totalCreated++;
+
+                    // Mark seat as reserved in global tracking
+                    reservedSiegeIds.add(siegeId);
+                }
+            }
+
+            redirect.addFlashAttribute("successMessage", totalCreated + " réservation(s) créée(s) avec attribution automatique des sièges.");
+        } catch (IllegalStateException ex) {
+            redirect.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("errorMessage", "Erreur lors de la création des réservations multiples: " + ex.getMessage());
+        }
+        return "redirect:/reservations";
+    }
+
+    // ========== CONFIRM AND PAY ALL PENDING RESERVATIONS ==========
+    @PostMapping("/confirm-all")
+    public String confirmAll(RedirectAttributes redirect) {
+        try {
+            java.util.List<Reservation> allReservations = reservationService.findAll();
+            int confirmedCount = 0;
+            int totalPoints = 0;
+            int totalVolPoints = 0;
+
+            // Find 'confirmed' status
+            java.util.Optional<com.itu.aviation.entity.StatutReservation> confirmOpt = statutReservationRepository.findByNomStatusContainingIgnoreCase("confirm");
+            com.itu.aviation.entity.StatutReservation confirmStatut = confirmOpt.orElseGet(() -> statutReservationRepository.findAll().stream().findFirst().orElse(null));
+            if (confirmStatut == null) throw new IllegalStateException("Aucun statut de confirmation disponible");
+
+            for (Reservation r : allReservations) {
+                // Skip already confirmed reservations
+                if (r.getStatutReservation() != null && r.getStatutReservation().getNomStatus() != null
+                        && r.getStatutReservation().getNomStatus().toLowerCase().contains("confirm")) {
+                    continue;
+                }
+
+                // Confirm this reservation
+                r.setStatutReservation(confirmStatut);
+                reservationService.update(r.getId(), r);
+                confirmedCount++;
+
+                // Add fidelity points
+                if (r.getPassager() != null) {
+                    Integer pointsConfig = configService.getPointsFidelite();
+                    if (pointsConfig != null && pointsConfig > 0) {
+                        com.itu.aviation.entity.Passager passager = r.getPassager();
+                        Integer currentPoints = passager.getFidelite() != null ? passager.getFidelite() : 0;
+                        passager.setFidelite(currentPoints + pointsConfig);
+                        passagerService.update(passager.getId(), passager);
+                        fidelitePassagerService.addPoints(passager, pointsConfig, r.getDateReservation());
+                        totalPoints += pointsConfig;
+                    }
+                }
+
+                // Add vol popularity points
+                if (r.getVol() != null && r.getVol().getVol() != null) {
+                    Integer pointsVolConfig = configService.getPointVol();
+                    if (pointsVolConfig != null && pointsVolConfig > 0) {
+                        Vol vol = r.getVol().getVol();
+                        Integer currentVolPoints = vol.getPointVol() != null ? vol.getPointVol() : 0;
+                        vol.setPointVol(currentVolPoints + pointsVolConfig);
+                        volService.update(vol.getId(), vol);
+                        populariteVolService.addPoints(vol, pointsVolConfig, r.getDateReservation());
+                        totalVolPoints += pointsVolConfig;
+                    }
+                }
+
+                // Create billet if not exists
+                boolean billetExists = billetRepository.findAll().stream()
+                        .anyMatch(b -> b.getReservation() != null && b.getReservation().getId().equals(r.getId()));
+                if (!billetExists) {
+                    Billet b = new Billet();
+                    b.setReservation(r);
+                    b.setSiege(r.getSiege());
+                    b.setDateEmission(java.time.LocalDateTime.now());
+                    String num = "BIL-" + r.getId() + "-" + System.currentTimeMillis();
+                    b.setNumeroBillet(num);
+                    b.setPrixFinal(r.getPrix());
+                    java.util.List<StatusBillet> statuses = statusBilletRepository.findAll();
+                    if (statuses.size() > 4) b.setStatusBillet(statuses.get(4));
+                    else if (!statuses.isEmpty()) b.setStatusBillet(statuses.get(0));
+                    billetRepository.save(b);
+                }
+            }
+
+            String message = confirmedCount + " réservation(s) confirmée(s) et payée(s)";
+            if (totalPoints > 0) {
+                message += " - " + totalPoints + " points de fidélité ajoutés au total";
+            }
+            if (totalVolPoints > 0) {
+                message += " - " + totalVolPoints + " points de popularité vol ajoutés";
+            }
+            redirect.addFlashAttribute("successMessage", message);
+        } catch (Exception ex) {
+            redirect.addFlashAttribute("errorMessage", "Erreur lors de la confirmation: " + ex.getMessage());
+        }
+        return "redirect:/reservations";
     }
 }

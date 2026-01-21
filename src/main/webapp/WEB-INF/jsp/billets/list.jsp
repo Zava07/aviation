@@ -4,9 +4,111 @@
 <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
 
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="card-title">Billets</h3>
+        <button type="button" id="openPayAllModal" class="btn btn-sm btn-success">Payer tous les billets</button>
     </div>
+
+    <!-- Modal Payer tous les billets -->
+    <div id="payAllModal" class="modal" tabindex="-1" role="dialog" style="display:none;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Payer tous les billets non payés</h5>
+                    <button type="button" class="close" id="closePayAllModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="payAllForm" method="post" action="${pageContext.request.contextPath}/paiements/pay-all-billets">
+                        <div class="mb-3">
+                            <label>Méthode de paiement</label>
+                            <select name="methodeId" class="form-control" required id="payAllMethode">
+                                <option value="">-- Méthode --</option>
+                                <c:forEach var="m" items="${methodes}">
+                                    <option value="${m.id}">${m.nomMethode}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Devise</label>
+                            <select name="deviseId" class="form-control" required>
+                                <option value="">-- Devise --</option>
+                                <c:forEach var="d" items="${devises}">
+                                    <option value="${d.id}">${d.nomDevise}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Caisse</label>
+                            <select name="caisseId" class="form-control" required id="payAllCaisse">
+                                <option value="">-- Caisse --</option>
+                                <c:forEach var="c" items="${caisses}">
+                                    <option value="${c.id}">Caisse #${c.id}<c:if test="${not empty c.nomCaisse}"> - ${c.nomCaisse}</c:if></option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="mt-3 text-right">
+                            <button type="submit" class="btn btn-success">Payer Tout</button>
+                            <button type="button" class="btn btn-secondary" id="cancelPayAll">Annuler</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        const openBtn = document.getElementById('openPayAllModal');
+        const modal = document.getElementById('payAllModal');
+        const closeBtn = document.getElementById('closePayAllModal');
+        const cancelBtn = document.getElementById('cancelPayAll');
+        const methodeSelect = document.getElementById('payAllMethode');
+        const caisseSelect = document.getElementById('payAllCaisse');
+
+        const allCaisses = [];
+        <c:forEach var="c" items="${caisses}">
+            allCaisses.push({id: ${c.id}, nom: '${c.nomCaisse}'});
+        </c:forEach>
+
+        function showModal(){ modal.style.display='block'; }
+        function hideModal(){ modal.style.display='none'; }
+
+        openBtn && openBtn.addEventListener('click', showModal);
+        closeBtn && closeBtn.addEventListener('click', hideModal);
+        cancelBtn && cancelBtn.addEventListener('click', hideModal);
+
+        function formatCaisseLabel(item){
+            return 'Caisse #' + item.id + (item.nom ? ' - ' + item.nom : '');
+        }
+
+        function populateCaisseOptions(list){
+            caisseSelect.innerHTML = '<option value="">-- Caisse --</option>';
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = formatCaisseLabel(item);
+                caisseSelect.appendChild(opt);
+            });
+        }
+
+        function fetchCaissesByMethode(methodeId){
+            if(!methodeId) return Promise.resolve([]);
+            return fetch('${pageContext.request.contextPath}/api/caisses/by-methode/' + encodeURIComponent(methodeId))
+                .then(r => r.ok ? r.json() : [])
+                .catch(() => []);
+        }
+
+        methodeSelect && methodeSelect.addEventListener('change', function(){
+            const val = this.value;
+            if(!val){
+                populateCaisseOptions(allCaisses);
+                return;
+            }
+            fetchCaissesByMethode(val).then(data => populateCaisseOptions(data.length ? data : allCaisses));
+        });
+    })();
+    </script>
+
     <div class="card-body">
         <div class="mb-3">
             <form method="get" action="${pageContext.request.contextPath}/billets" class="form-inline">

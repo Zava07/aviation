@@ -34,6 +34,16 @@
                         Nombre de points de fidélité attribués aux passagers pour chaque vol effectué.
                     </small>
                 </div>
+                
+                <div class="form-group">
+                    <label for="pointVol">Points par Vol <span class="required">*</span></label>
+                    <input type="number" id="pointVol" name="pointVol"
+                           class="form-control" required min="0"
+                           value="${config.pointVol != null ? config.pointVol : ''}"
+                           placeholder="Nombre de points attribués par vol pour le calcul de popularité">
+                    <small class="form-text text-muted">
+                        Valeur numérique utilisée pour calculer les points de vol (popularité).</small>
+                </div>
             </div>
 
             <c:if test="${isEdit && config.dateModification != null}">

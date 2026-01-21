@@ -16,6 +16,9 @@ public class Vol {
     @Column(name = "numero_vol", length = 20, nullable = false, unique = true)
     private String numeroVol;
 
+    @Column(name = "point_vol", nullable = false)
+    private Integer pointVol;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aeroport_origine", nullable = false)
     private Aeroport aeroportOrigine;
@@ -29,6 +32,9 @@ public class Vol {
 
     @OneToMany(mappedBy = "vol", fetch = FetchType.LAZY)
     private List<VolInstance> instances = new ArrayList<>();
+
+    @OneToMany(mappedBy = "vol", fetch = FetchType.LAZY)
+    private List<PopulariteVol> popularites = new ArrayList<>();
 
     public Vol() {
     }
@@ -47,6 +53,14 @@ public class Vol {
 
     public void setNumeroVol(String numeroVol) {
         this.numeroVol = numeroVol;
+    }
+
+    public Integer getPointVol() {
+        return pointVol;
+    }
+
+    public void setPointVol(Integer pointVol) {
+        this.pointVol = pointVol;
     }
 
     public Aeroport getAeroportOrigine() {
@@ -79,5 +93,13 @@ public class Vol {
 
     public void setInstances(List<VolInstance> instances) {
         this.instances = instances;
+    }
+
+    public List<PopulariteVol> getPopularites() {
+        return popularites;
+    }
+
+    public void setPopularites(List<PopulariteVol> popularites) {
+        this.popularites = popularites;
     }
 }

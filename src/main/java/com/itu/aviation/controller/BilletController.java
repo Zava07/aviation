@@ -37,6 +37,15 @@ public class BilletController {
     @Autowired
     private com.itu.aviation.service.PassagerService passagerService;
 
+    @Autowired
+    private com.itu.aviation.service.MethodePaiementService methodePaiementService;
+
+    @Autowired
+    private com.itu.aviation.service.DeviseService deviseService;
+
+    @Autowired
+    private com.itu.aviation.service.CaisseService caisseService;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String numero,
             @RequestParam(required = false) String passager,
@@ -107,6 +116,9 @@ public class BilletController {
         mav.addObject("passagers", passagerService.findAll());
         mav.addObject("vols", volInstanceService.findAll());
         mav.addObject("statusList", statusBilletRepository.findAll());
+        mav.addObject("methodes", methodePaiementService.findAll());
+        mav.addObject("devises", deviseService.findAll());
+        mav.addObject("caisses", caisseService.findAll());
         return mav;
     }
 

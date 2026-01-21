@@ -4,6 +4,7 @@
 CREATE TABLE config (
     id_config SERIAL PRIMARY KEY,
     point_fidelite INT NOT NULL,
+    point_vol INT NOT NULL,
     date_modification TIMESTAMP DEFAULT NOW()
 );
 
@@ -84,7 +85,15 @@ CREATE TABLE vol (
     numero_vol VARCHAR(20) NOT NULL,
     id_aeroport_origine INT NOT NULL REFERENCES aeroport(id_aeroport),
     id_aeroport_destination INT NOT NULL REFERENCES aeroport(id_aeroport),
+    point_vol  INT NOT NULL,
     UNIQUE (numero_vol, id_aeroport_origine, id_aeroport_destination)
+);
+
+CREATE TABLE popularite_vol(
+    id_historique_point_vol SERIAL PRIMARY KEY,
+    id_vol INT NOT NULL REFERENCES vol(id_vol),
+    point INT NOT NULL,
+    date_point TIMESTAMP DEFAULT NOW()
 );
 
 -- =====================================================
