@@ -18,8 +18,12 @@
                 <div class="config-details">
                     <div class="config-item">
                         <span class="config-label">Points de Fidélité</span>
-                        <span class="config-value">${currentConfig.pointFidelite} points</span>
+                                <span class="config-value">${currentConfig.pointFidelite} points</span>
                     </div>
+                            <div class="config-item">
+                                <span class="config-label">Points par Vol</span>
+                                <span class="config-value">${currentConfig.pointVol} pts</span>
+                            </div>
                     <div class="config-item">
                         <span class="config-label">Dernière Modification</span>
                         <span class="config-value">
@@ -45,6 +49,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Points Fidélité</th>
+                        <th>Points par Vol</th>
                         <th>Date de Modification</th>
                         <th>Statut</th>
                         <th>Actions</th>
@@ -56,6 +61,9 @@
                             <td>#${cfg.id}</td>
                             <td>
                                 <span class="badge badge-primary">${cfg.pointFidelite} points</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">${cfg.pointVol} pts</span>
                             </td>
                             <td>
                                 <c:if test="${cfg.dateModification != null}">

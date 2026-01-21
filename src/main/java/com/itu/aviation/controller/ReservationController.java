@@ -80,6 +80,9 @@ public class ReservationController {
     @Autowired
     private com.itu.aviation.service.FidelitePassagerService fidelitePassagerService;
 
+    @Autowired
+    private com.itu.aviation.service.PopulariteVolService populariteVolService;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String numero,
             @RequestParam(required = false) String passager,
@@ -484,6 +487,23 @@ public class ReservationController {
             }
             // ==================================================
 
+            // ========== AJOUT DES POINTS DE POPULARITÉ AU VOL ==========
+            if (r.getVol() != null && r.getVol().getVol() != null) {
+                Integer pointsVolConfig = configService.getPointVol();
+                if (pointsVolConfig != null && pointsVolConfig > 0) {
+                    Vol vol = r.getVol().getVol();
+                    
+                    // Ajouter les points au total du vol
+                    Integer currentVolPoints = vol.getPointVol() != null ? vol.getPointVol() : 0;
+                    vol.setPointVol(currentVolPoints + pointsVolConfig);
+                    volService.update(vol.getId(), vol);
+                    
+                    // Créer une entrée dans popularite_vol pour l'historique
+                    populariteVolService.addPoints(vol, pointsVolConfig, r.getDateReservation());
+                }
+            }
+            // ===========================================================
+
             // create billet if none exists
             boolean exists = billetRepository.findAll().stream().anyMatch(b -> b.getReservation() != null && b.getReservation().getId().equals(id));
                 if (!exists) {
@@ -501,9 +521,13 @@ public class ReservationController {
 
             // Message avec les points gagnés
             Integer pointsGagnes = configService.getPointsFidelite();
+            Integer pointsVolGagnes = configService.getPointVol();
             String message = "Réservation confirmée et billet créé";
             if (pointsGagnes != null && pointsGagnes > 0 && r.getPassager() != null) {
                 message += " - " + pointsGagnes + " point(s) de fidélité ajouté(s) à " + r.getPassager().getNom() + " " + r.getPassager().getPrenom();
+            }
+            if (pointsVolGagnes != null && pointsVolGagnes > 0 && r.getVol() != null && r.getVol().getVol() != null) {
+                message += " - " + pointsVolGagnes + " point(s) de popularité ajouté(s) au vol " + r.getVol().getVol().getNumeroVol();
             }
             redirect.addFlashAttribute("successMessage", message);
         } catch (Exception ex) {
@@ -817,6 +841,7 @@ public class ReservationController {
             java.util.List<Reservation> allReservations = reservationService.findAll();
             int confirmedCount = 0;
             int totalPoints = 0;
+            int totalVolPoints = 0;
 
             // Find 'confirmed' status
             java.util.Optional<com.itu.aviation.entity.StatutReservation> confirmOpt = statutReservationRepository.findByNomStatusContainingIgnoreCase("confirm");
@@ -848,6 +873,19 @@ public class ReservationController {
                     }
                 }
 
+                // Add vol popularity points
+                if (r.getVol() != null && r.getVol().getVol() != null) {
+                    Integer pointsVolConfig = configService.getPointVol();
+                    if (pointsVolConfig != null && pointsVolConfig > 0) {
+                        Vol vol = r.getVol().getVol();
+                        Integer currentVolPoints = vol.getPointVol() != null ? vol.getPointVol() : 0;
+                        vol.setPointVol(currentVolPoints + pointsVolConfig);
+                        volService.update(vol.getId(), vol);
+                        populariteVolService.addPoints(vol, pointsVolConfig, r.getDateReservation());
+                        totalVolPoints += pointsVolConfig;
+                    }
+                }
+
                 // Create billet if not exists
                 boolean billetExists = billetRepository.findAll().stream()
                         .anyMatch(b -> b.getReservation() != null && b.getReservation().getId().equals(r.getId()));
@@ -869,6 +907,9 @@ public class ReservationController {
             String message = confirmedCount + " réservation(s) confirmée(s) et payée(s)";
             if (totalPoints > 0) {
                 message += " - " + totalPoints + " points de fidélité ajoutés au total";
+            }
+            if (totalVolPoints > 0) {
+                message += " - " + totalVolPoints + " points de popularité vol ajoutés";
             }
             redirect.addFlashAttribute("successMessage", message);
         } catch (Exception ex) {

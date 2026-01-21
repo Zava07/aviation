@@ -42,6 +42,15 @@ public class ConfigService {
                 .orElse(0);
     }
 
+    /**
+     * Récupère les points de vol configurés
+     */
+    public Integer getPointVol() {
+        return findCurrentConfig()
+                .map(Config::getPointVol)
+                .orElse(0);
+    }
+
     public Config create(Config config) {
         return configRepository.save(config);
     }

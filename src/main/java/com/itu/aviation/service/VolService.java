@@ -30,6 +30,10 @@ public class VolService {
 
     public Vol create(Vol vol) {
         // Vol (route) creation: scheduling is handled via VolInstance
+        // Initialize pointVol to 0 for new vols
+        if (vol.getPointVol() == null) {
+            vol.setPointVol(0);
+        }
         return volRepository.save(vol);
     }
 

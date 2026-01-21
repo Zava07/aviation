@@ -15,6 +15,9 @@ public class Config {
     @Column(name = "point_fidelite", nullable = false)
     private Integer pointFidelite;
 
+    @Column(name = "point_vol", nullable = false)
+    private Integer pointVol;
+
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
 
@@ -41,6 +44,14 @@ public class Config {
 
     public void setPointFidelite(Integer pointFidelite) {
         this.pointFidelite = pointFidelite;
+    }
+
+    public Integer getPointVol() {
+        return pointVol;
+    }
+
+    public void setPointVol(Integer pointVol) {
+        this.pointVol = pointVol;
     }
 
     public LocalDateTime getDateModification() {

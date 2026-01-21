@@ -66,6 +66,12 @@
                                 <span>Instances de Vol</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/popularite-vols" class="nav-link ${currentPage == 'popularite' ? 'active' : ''}">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Popularité Vols</span>
+                            </a>
+                        </li>
                         
                     </ul>
                 </li>
