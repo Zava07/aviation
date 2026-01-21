@@ -204,6 +204,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/categorie-passager" class="nav-link ${currentPage == 'categorie-passager' ? 'active' : ''}">
+                                <i class="fas fa-users"></i>
+                                <span>Categories Passagers</span>
+                            </a>
+                        </li>
+                        <li class="nav-it em">
                             <a href="${pageContext.request.contextPath}/type-passagers" class="nav-link ${currentPage == 'type-passagers' || currentPage == 'typepassagers' ? 'active' : ''}">
                                 <i class="fas fa-users"></i>
                                 <span>Types Passagers</span>

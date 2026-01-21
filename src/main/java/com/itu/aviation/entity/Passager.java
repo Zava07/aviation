@@ -28,6 +28,10 @@ public class Passager {
     @JoinColumn(name = "id_type_passager", nullable = false)
     private TypePassager typePassager;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_categorie_passager")
+    private com.itu.aviation.entity.CategoriePassager categoriePassager;
+
     @Column(name = "fidelite")
     private Integer fidelite;
 
@@ -78,6 +82,14 @@ public class Passager {
 
     public void setFidelite(Integer fidelite) {
         this.fidelite = fidelite;
+    }
+
+    public com.itu.aviation.entity.CategoriePassager getCategoriePassager() {
+        return categoriePassager;
+    }
+
+    public void setCategoriePassager(com.itu.aviation.entity.CategoriePassager categoriePassager) {
+        this.categoriePassager = categoriePassager;
     }
 
     public List<Reservation> getReservations() {

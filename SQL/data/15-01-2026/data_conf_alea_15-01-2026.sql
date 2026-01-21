@@ -22,6 +22,11 @@ INSERT INTO type_passager(type) VALUES
 ('Individuel'),
 ('Entreprise');
 
+INSERT INTO categorie_passager(categorie, pourcentage_reduction) VALUES
+('Adulte' , NULL),
+('Enfant', NULL),
+('Bebe', 10);
+
 INSERT INTO statut_reservation(nom_status) VALUES
 ('Confirme'),
 ('En attente'),
@@ -29,7 +34,8 @@ INSERT INTO statut_reservation(nom_status) VALUES
 
 INSERT INTO classe(nom_classe, niveau) VALUES
 ('Economie', 5),
-('Première', 15);
+('Premium' , 10),
+('Premiere Classe', 15);
 
 
 INSERT INTO status_siege_vol(status) VALUES

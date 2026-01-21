@@ -30,6 +30,7 @@ public class ReservationService {
     private final StatusSiegeVolRepository statusSiegeVolRepository;
     private final StatutReservationRepository statutReservationRepository;
     private final PrixVolClasseService prixVolClasseService;
+    private final com.itu.aviation.service.CategoriePassagerService categoriePassagerService;
     private final VolInstanceService volInstanceService;
 
     @PersistenceContext
@@ -40,13 +41,15 @@ public class ReservationService {
                               StatusSiegeVolRepository statusSiegeVolRepository,
                               StatutReservationRepository statutReservationRepository,
                               PrixVolClasseService prixVolClasseService,
-                              VolInstanceService volInstanceService) {
+                              VolInstanceService volInstanceService,
+                              com.itu.aviation.service.CategoriePassagerService categoriePassagerService) {
         this.reservationRepository = reservationRepository;
         this.siegeVolRepository = siegeVolRepository;
         this.statusSiegeVolRepository = statusSiegeVolRepository;
         this.statutReservationRepository = statutReservationRepository;
         this.prixVolClasseService = prixVolClasseService;
         this.volInstanceService = volInstanceService;
+        this.categoriePassagerService = categoriePassagerService;
     }
 
     public List<Reservation> findAll() {
@@ -175,39 +178,53 @@ public class ReservationService {
 
         Long routeVolId = (vi != null && vi.getVol() != null) ? vi.getVol().getId() : null;
 
+        // Prefer price matching the passenger's category when available
+        final Long desiredCatId = (r.getPassager() != null && r.getPassager().getCategoriePassager() != null)
+            ? r.getPassager().getCategoriePassager().getId() : null;
+
         java.util.Optional<com.itu.aviation.entity.PrixVolClasse> p = prixVolClasseService.findAll().stream()
             .filter(x -> x.getVol() != null && routeVolId != null && x.getVol().getId().equals(routeVolId)
-                && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
+                && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId())
+                && ((desiredCatId == null && x.getCategoriePassager() == null) || (x.getCategoriePassager() != null && desiredCatId != null && x.getCategoriePassager().getId().equals(desiredCatId))))
             .findFirst();
 
-        BigDecimal base = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(BigDecimal.ZERO);
-
-        // time factor
-        BigDecimal timeFactor = BigDecimal.ZERO;
-        if (r.getVol() != null && r.getVol().getDateDepart() != null) {
-            long days = Math.max(0, Duration.between(LocalDateTime.now(), r.getVol().getDateDepart()).toDays());
-            if (days < 7) timeFactor = new BigDecimal("0.20");
-            else if (days < 30) timeFactor = new BigDecimal("0.10");
+        BigDecimal base = BigDecimal.ZERO;
+        if (p.isPresent()) {
+            base = p.get().getPrix();
+        } else {
+            // fallback: any price for this vol+class (ignore category)
+            java.util.Optional<com.itu.aviation.entity.PrixVolClasse> any = prixVolClasseService.findAll().stream()
+                .filter(x -> x.getVol() != null && routeVolId != null && x.getVol().getId().equals(routeVolId)
+                    && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId()))
+                .findFirst();
+            base = any.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(BigDecimal.ZERO);
         }
 
-        // occupancy factor
-        BigDecimal occupancyFactor = BigDecimal.ZERO;
-        if (r.getVol() != null) {
-            java.util.List<SiegeVol> all = siegeVolRepository.findByVolInstance_Id(r.getVol().getId());
-            long total = all.size();
-            long occupied = all.stream().filter(sv -> {
-                String st = sv.getStatusSiegeVol() != null ? sv.getStatusSiegeVol().getStatus() : "";
-                return !st.equalsIgnoreCase("Libre") && !st.equalsIgnoreCase("Free");
-            }).count();
-            if (total > 0) {
-                double rate = (double) occupied / (double) total;
-                if (rate > 0.8) occupancyFactor = new BigDecimal("0.25");
-                else if (rate > 0.6) occupancyFactor = new BigDecimal("0.10");
+        // If passenger category has an explicit percentage reduction, apply it relative to the Adulte base price
+        if (desiredCatId != null) {
+            try {
+                com.itu.aviation.entity.CategoriePassager desiredCat = categoriePassagerService.findById(desiredCatId);
+                java.math.BigDecimal pct = desiredCat.getPourcentageReduction();
+                if (pct != null) {
+                    // find Adulte base price for same vol+classe
+                    java.util.Optional<com.itu.aviation.entity.PrixVolClasse> adultePriceOpt = prixVolClasseService.findAll().stream()
+                        .filter(x -> x.getVol() != null && routeVolId != null && x.getVol().getId().equals(routeVolId)
+                            && x.getClasse() != null && x.getClasse().getId().equals(r.getClasse().getId())
+                            && x.getCategoriePassager() != null && "Adulte".equalsIgnoreCase(x.getCategoriePassager().getCategorie()))
+                        .findFirst();
+
+                    java.math.BigDecimal adulteBase = adultePriceOpt.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(base);
+                    if (adulteBase == null) adulteBase = java.math.BigDecimal.ZERO;
+                    java.math.BigDecimal computed = adulteBase.multiply(pct).divide(new java.math.BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
+                    return computed.setScale(2, java.math.RoundingMode.HALF_UP);
+                }
+            } catch (Exception ex) {
+                // ignore and fallback to base
             }
         }
 
-        BigDecimal multiplier = BigDecimal.ONE.add(timeFactor).add(occupancyFactor);
-        return base.multiply(multiplier).setScale(2, java.math.RoundingMode.HALF_UP);
+        // Return base price directly without dynamic adjustments
+        return base.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /**

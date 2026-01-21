@@ -66,7 +66,7 @@
                         <c:forEach var="s" items="${seats}">
                             <c:set var="status" value="${s.status}" />
                             <c:set var="selectable" value="${s.selectable}" />
-                            <button class="seat-btn status-${fn:toLowerCase(status)}" data-id="${s.id}" data-status="${status}" data-classe="${s.classeId}" data-price="${s.price}" ${!selectable ? 'disabled' : ''}>${s.numero}<br/><small>${s.classeNom}</small></button>
+                            <button class="seat-btn status-${fn:toLowerCase(status)}" data-id="${s.id}" data-status="${status}" data-classe="${s.classeId}" data-price="${s.price}" data-default-price="${s.price}" ${!selectable ? 'disabled' : ''}>${s.numero}<br/><small>${s.classeNom}</small></button>
                         </c:forEach>
                     </div>
                 </div>
@@ -96,6 +96,16 @@
                                 <option value="">-- Choisir --</option>
                                 <c:forEach var="t" items="${types}">
                                     <option value="${t.id}">${t.type}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Catégorie passager</label>
+                            <select name="passager.categoriePassager.id" id="categorieId" class="form-control">
+                                <option value="">-- Choisir --</option>
+                                <c:forEach var="c" items="${categories}">
+                                    <option value="${c.id}">${c.categorie}</option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -154,6 +164,75 @@
         const chosenSeat = document.getElementById('chosenSeat');
         const chosenPrice = document.getElementById('chosenPrice');
         const totalPrixInput = document.getElementById('totalPrix');
+
+            // Build priceMatrix from server-provided model (JS object)
+            const priceMatrix = {};
+            <c:forEach var="entry" items="${priceMatrix}">
+                priceMatrix['${entry.key}'] = {};
+                <c:forEach var="inner" items="${entry.value}">
+                    priceMatrix['${entry.key}']['${inner.key}'] = ${inner.value};
+                </c:forEach>
+            </c:forEach>
+
+            // Build categoryInfo with pourcentageReduction for each category
+            const categoryInfo = {};
+            <c:forEach var="c" items="${categories}">
+                categoryInfo['${c.id}'] = {
+                    nom: '${c.categorie}',
+                    pourcentage: <c:choose><c:when test="${c.pourcentageReduction != null}">${c.pourcentageReduction}</c:when><c:otherwise>null</c:otherwise></c:choose>
+                };
+            </c:forEach>
+
+            // Find Adulte category ID
+            let adulteCatId = null;
+            for(const [cid, info] of Object.entries(categoryInfo)){
+                if(info.nom && info.nom.toLowerCase() === 'adulte'){
+                    adulteCatId = cid;
+                    break;
+                }
+            }
+
+            const categorieSelect = document.getElementById('categorieId');
+            function updateSeatPricesForCategory(catId){
+                const catInfo = categoryInfo[catId];
+                const pct = catInfo ? catInfo.pourcentage : null;
+
+                seatButtons.forEach(b => {
+                    const classId = b.getAttribute('data-classe');
+                    let newPrice = null;
+
+                    if(pct !== null && adulteCatId !== null){
+                        // Category has a percentage reduction -> price = adultePrice * pct / 100
+                        let adultePrice = priceMatrix[classId] && priceMatrix[classId][adulteCatId] ? priceMatrix[classId][adulteCatId] : null;
+                        if(adultePrice === null){
+                            // fallback to default price as adulte base
+                            adultePrice = parseFloat(b.getAttribute('data-default-price') || '0');
+                        }
+                        newPrice = adultePrice * pct / 100;
+                    } else if(priceMatrix[classId] && priceMatrix[classId][catId]){
+                        // Category-specific price exists
+                        newPrice = priceMatrix[classId][catId];
+                    }
+
+                    if(newPrice !== null){
+                        b.setAttribute('data-price', parseFloat(newPrice));
+                    } else {
+                        // fallback to default price
+                        b.setAttribute('data-price', parseFloat(b.getAttribute('data-default-price') || '0'));
+                    }
+                });
+                // refresh displayed selection total
+                updateSelectionDisplay();
+            }
+
+            if(categorieSelect){
+                categorieSelect.addEventListener('change', function(){
+                    const catId = this.value;
+                    if(catId) updateSeatPricesForCategory(catId);
+                });
+                // initialize using current selected value (if any)
+                if(categorieSelect.value) updateSeatPricesForCategory(categorieSelect.value);
+            }
 
         function updateSelectionDisplay(){
             const selected = seatButtons.filter(b => b.classList.contains('selected'));

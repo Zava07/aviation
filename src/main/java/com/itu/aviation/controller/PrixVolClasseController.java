@@ -25,10 +25,14 @@ public class PrixVolClasseController {
 
     @Autowired
     private ClasseService classeService;
+    
+    @Autowired
+    private com.itu.aviation.service.CategoriePassagerService categoriePassagerService;
 
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) Long volId,
                              @RequestParam(required = false) Long classeId,
+                             @RequestParam(required = false) Long categorieId,
                              @RequestParam(required = false) java.math.BigDecimal minPrice,
                              @RequestParam(required = false) java.math.BigDecimal maxPrice) {
         ModelAndView mav = new ModelAndView("prix/list");
@@ -42,6 +46,9 @@ public class PrixVolClasseController {
             if (classeId != null) {
                 if (p.getClasse() == null || !classeId.equals(p.getClasse().getId())) return false;
             }
+            if (categorieId != null) {
+                if (p.getCategoriePassager() == null || !categorieId.equals(p.getCategoriePassager().getId())) return false;
+            }
             if (minPrice != null) {
                 if (p.getPrix() == null || p.getPrix().compareTo(minPrice) < 0) return false;
             }
@@ -53,6 +60,7 @@ public class PrixVolClasseController {
         mav.addObject("prixList", filtered);
         mav.addObject("vols", volService.findAll());
         mav.addObject("classes", classeService.findAll());
+        mav.addObject("categories", categoriePassagerService.findAll());
         return mav;
     }
 
@@ -64,6 +72,7 @@ public class PrixVolClasseController {
         mav.addObject("editPrix", new PrixVolClasse());
         mav.addObject("vols", volService.findAll());
         mav.addObject("classes", classeService.findAll());
+        mav.addObject("categories", categoriePassagerService.findAll());
         return mav;
     }
 
@@ -75,6 +84,7 @@ public class PrixVolClasseController {
         mav.addObject("editPrix", prixService.findById(id));
         mav.addObject("vols", volService.findAll());
         mav.addObject("classes", classeService.findAll());
+        mav.addObject("categories", categoriePassagerService.findAll());
         return mav;
     }
 

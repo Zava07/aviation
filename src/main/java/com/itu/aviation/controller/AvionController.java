@@ -47,6 +47,12 @@ public class AvionController {
     @Autowired
     private com.itu.aviation.service.PrixVolClasseService prixVolClasseService;
 
+    @Autowired
+    private com.itu.aviation.service.ReservationService reservationService;
+
+    @Autowired
+    private com.itu.aviation.repository.BilletRepository billetRepository;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String codeAvion,
                              @RequestParam(required = false) Long modeleId,
@@ -223,26 +229,78 @@ public class AvionController {
             java.math.BigDecimal max = java.math.BigDecimal.ZERO;
             Long volId = vol.getId();
             for (java.util.Map.Entry<Long, Long> e : seatCountByClasse.entrySet()) {
-            Long classeId = e.getKey();
-            Long count = e.getValue();
-            java.util.Optional<com.itu.aviation.entity.PrixVolClasse> p = allPrices.stream()
-                .filter(x -> x.getVol() != null && x.getVol().getId() != null && x.getVol().getId().equals(volId)
-                    && x.getClasse() != null && x.getClasse().getId() != null && x.getClasse().getId().equals(classeId))
-                .findFirst();
-            java.math.BigDecimal prix = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(java.math.BigDecimal.ZERO);
-            max = max.add(prix.multiply(new java.math.BigDecimal(count)));
+                Long classeId = e.getKey();
+                Long count = e.getValue();
+                // Use only prices for category 'Adulte' when computing max revenue
+                java.util.Optional<com.itu.aviation.entity.PrixVolClasse> p = allPrices.stream()
+                    .filter(x -> x.getVol() != null && x.getVol().getId() != null && x.getVol().getId().equals(volId)
+                        && x.getClasse() != null && x.getClasse().getId() != null && x.getClasse().getId().equals(classeId)
+                        && (x.getCategoriePassager() == null || "Adulte".equalsIgnoreCase(x.getCategoriePassager().getCategorie())))
+                    .findFirst();
+                java.math.BigDecimal prix = p.map(com.itu.aviation.entity.PrixVolClasse::getPrix).orElse(java.math.BigDecimal.ZERO);
+                max = max.add(prix.multiply(new java.math.BigDecimal(count)));
             }
             java.util.Map<String, Object> map = new java.util.HashMap<>();
             map.put("vol", vol);
             map.put("maxRevenue", max);
             // gather prices per class for this vol to show in the view
+            // show only prices for default category (Adulte) or prices without specific category
             java.util.List<com.itu.aviation.entity.PrixVolClasse> pricesForVol = allPrices.stream()
                 .filter(x -> x.getVol() != null && x.getVol().getId() != null && x.getVol().getId().equals(volId))
+                .filter(x -> x.getCategoriePassager() == null || "Adulte".equalsIgnoreCase(x.getCategoriePassager().getCategorie()))
                 .toList();
             map.put("prixParClasse", pricesForVol);
             volsWithMax.add(map);
         }
         mav.addObject("volsWithMax", volsWithMax);
+
+        // list vol instances for this avion (convert LocalDateTime -> java.util.Date for JSP fmt:formatDate)
+        java.util.List<java.util.Map<String, Object>> volInstancesView = volInstanceService.findAll().stream()
+                .filter(vi -> vi.getAvion() != null && vi.getAvion().getId() != null && vi.getAvion().getId().equals(id))
+                .sorted((a, b) -> {
+                    if (a.getDateDepart() == null && b.getDateDepart() == null) return 0;
+                    if (a.getDateDepart() == null) return -1;
+                    if (b.getDateDepart() == null) return 1;
+                    return a.getDateDepart().compareTo(b.getDateDepart());
+                })
+                .map(vi -> {
+                    java.util.Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("id", vi.getId());
+                    m.put("vol", vi.getVol());
+                    m.put("dateDepart", vi.getDateDepart());
+                    m.put("dateArrivee", vi.getDateArrivee());
+                    java.util.Date dateDepartDate = null;
+                    java.util.Date dateArriveeDate = null;
+                    if (vi.getDateDepart() != null) {
+                        dateDepartDate = java.util.Date.from(vi.getDateDepart().atZone(java.time.ZoneId.systemDefault()).toInstant());
+                    }
+                    if (vi.getDateArrivee() != null) {
+                        dateArriveeDate = java.util.Date.from(vi.getDateArrivee().atZone(java.time.ZoneId.systemDefault()).toInstant());
+                    }
+                    m.put("dateDepartDate", dateDepartDate);
+                    m.put("dateArriveeDate", dateArriveeDate);
+
+                    // compute total price for billets 'Payer'/'Emis' for this vol instance
+                    java.math.BigDecimal totalPaidEmis = java.math.BigDecimal.ZERO;
+                    try {
+                        java.util.List<com.itu.aviation.entity.Reservation> allRes = reservationService.findAll();
+                        for (com.itu.aviation.entity.Reservation rr : allRes) {
+                            if (rr.getVol() != null && rr.getVol().getId() != null && rr.getVol().getId().equals(vi.getId()) && rr.getPrix() != null) {
+                                boolean hasPaidOrEmis = billetRepository.findAll().stream().anyMatch(b ->
+                                    b.getReservation() != null && b.getReservation().getId() != null && b.getReservation().getId().equals(rr.getId())
+                                    && b.getStatusBillet() != null && b.getStatusBillet().getStatus() != null
+                                    && (b.getStatusBillet().getStatus().toLowerCase().contains("payer") || b.getStatusBillet().getStatus().toLowerCase().contains("emis"))
+                                );
+                                if (hasPaidOrEmis) totalPaidEmis = totalPaidEmis.add(rr.getPrix());
+                            }
+                        }
+                    } catch (Exception ex) {
+                        // ignore errors and leave total as zero
+                    }
+                    m.put("totalPaidEmis", totalPaidEmis);
+                    return m;
+                }).toList();
+        mav.addObject("volInstances", volInstancesView);
 
         return mav;
     }

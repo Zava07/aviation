@@ -22,6 +22,12 @@
                         <option value="${c.id}" <c:if test="${param.classeId == c.id}">selected</c:if>>${c.nomClasse}</option>
                     </c:forEach>
                 </select>
+                <select name="categorieId" class="form-control mr-2">
+                    <option value="">-- Catégorie --</option>
+                    <c:forEach var="cat" items="${categories}">
+                        <option value="${cat.id}" <c:if test="${param.categorieId == cat.id}">selected</c:if>>${cat.categorie}</option>
+                    </c:forEach>
+                </select>
                 <input type="number" step="0.01" name="minPrice" value="${param.minPrice}" placeholder="Prix min" class="form-control mr-2" />
                 <input type="number" step="0.01" name="maxPrice" value="${param.maxPrice}" placeholder="Prix max" class="form-control mr-2" />
                 <button class="btn btn-sm btn-primary" type="submit">Rechercher</button>
@@ -31,13 +37,14 @@
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
-                <tr><th>Vol</th><th>Classe</th><th>Prix</th><th>Actions</th></tr>
+                <tr><th>Vol</th><th>Classe</th><th>Catégorie</th><th>Prix</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                 <c:forEach var="p" items="${prixList}">
                     <tr>
                         <td>${p.vol != null ? p.vol.numeroVol : ''}</td>
                         <td>${p.classe != null ? p.classe.nomClasse : ''}</td>
+                        <td>${p.categoriePassager != null ? p.categoriePassager.categorie : 'Par défaut'}</td>
                         <td>${p.prix}</td>
                         <td>
                             <a href="${pageContext.request.contextPath}/prix/edit/${p.id}" class="btn btn-sm btn-info">Modifier</a>
