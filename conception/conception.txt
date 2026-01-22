@@ -199,3 +199,6 @@ bagage :
     -id_passager
     -poids
     -id_type
+
+
+\\ ajoute du module de gestion de publicite
