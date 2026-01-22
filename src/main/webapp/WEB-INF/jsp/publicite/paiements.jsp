@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
 
 <style>
@@ -558,6 +559,10 @@
                         <input type="hidden" id="societeIdInput" name="societeId">
                         <div class="form-grid">
                             <div class="form-group">
+                                <label><i class="fas fa-calendar-alt"></i> Date du paiement</label>
+                                <input type="date" id="datePaiement" name="datePaiement" required>
+                            </div>
+                            <div class="form-group">
                                 <label><i class="fas fa-coins"></i> Montant (MGA)</label>
                                 <input type="number" id="montant" name="montant" required min="1" placeholder="0">
                             </div>
@@ -669,6 +674,8 @@ function openPaymentForm(societeId, societeName, reste) {
     document.getElementById('resteDisplay').textContent = new Intl.NumberFormat('fr-FR').format(reste);
     document.getElementById('montant').max = reste;
     document.getElementById('montant').value = reste;
+    // Pré-remplir avec la date du jour
+    document.getElementById('datePaiement').value = new Date().toISOString().split('T')[0];
 }
 
 function closePaymentForm() {
@@ -677,6 +684,7 @@ function closePaymentForm() {
     document.getElementById('societeIdInput').value = '';
     document.getElementById('montant').value = '';
     document.getElementById('reference').value = '';
+    document.getElementById('datePaiement').value = '';
 }
 </script>
 

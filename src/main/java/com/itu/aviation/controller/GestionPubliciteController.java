@@ -224,9 +224,14 @@ public class GestionPubliciteController {
             @RequestParam("montant") BigDecimal montant,
             @RequestParam("caisseId") Long caisseId,
             @RequestParam(value = "reference", required = false) String reference,
+            @RequestParam(value = "datePaiement", required = false) String datePaiementStr,
             RedirectAttributes redirect) {
         try {
-            paiementPubliciteService.creerPaiement(societeId, montant, caisseId, reference);
+            java.time.LocalDateTime datePaiement = null;
+            if (datePaiementStr != null && !datePaiementStr.isEmpty()) {
+                datePaiement = java.time.LocalDateTime.parse(datePaiementStr + "T00:00:00");
+            }
+            paiementPubliciteService.creerPaiement(societeId, montant, caisseId, reference, datePaiement);
             redirect.addFlashAttribute("successMessage", "Paiement enregistré avec succès");
         } catch (Exception e) {
             redirect.addFlashAttribute("errorMessage", e.getMessage());

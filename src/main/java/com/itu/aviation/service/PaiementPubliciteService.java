@@ -59,7 +59,7 @@ public class PaiementPubliciteService {
     /**
      * Créer un paiement et mettre à jour la caisse
      */
-    public PaiementPublicite creerPaiement(Long societeId, BigDecimal montant, Long caisseId, String reference) {
+    public PaiementPublicite creerPaiement(Long societeId, BigDecimal montant, Long caisseId, String reference, LocalDateTime datePaiement) {
         Societe societe = societeService.findById(societeId);
         Caisse caisse = caisseRepository.findById(caisseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Caisse non trouvée: " + caisseId));
@@ -71,7 +71,7 @@ public class PaiementPubliciteService {
         paiement.setCaisse(caisse);
         paiement.setMethodePaiement(caisse.getMethodePaiement());
         paiement.setReference(reference);
-        paiement.setDatePaiement(LocalDateTime.now());
+        paiement.setDatePaiement(datePaiement != null ? datePaiement : LocalDateTime.now());
 
         paiement = paiementPubliciteRepository.save(paiement);
 
