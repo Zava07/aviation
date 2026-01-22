@@ -25,6 +25,10 @@
                                 <span class="config-value">${currentConfig.pointVol} pts</span>
                             </div>
                     <div class="config-item">
+                        <span class="config-label">Coût Publicité</span>
+                        <span class="config-value">${currentConfig.coutPubliciter} MGA</span>
+                    </div>
+                    <div class="config-item">
                         <span class="config-label">Dernière Modification</span>
                         <span class="config-value">
                             <c:if test="${currentConfig.dateModification != null}">
@@ -50,6 +54,7 @@
                         <th>ID</th>
                         <th>Points Fidélité</th>
                         <th>Points par Vol</th>
+                        <th>Coût pub.</th>
                         <th>Date de Modification</th>
                         <th>Statut</th>
                         <th>Actions</th>
@@ -64,6 +69,9 @@
                             </td>
                             <td>
                                 <span class="badge badge-info">${cfg.pointVol} pts</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-warning">${cfg.coutPubliciter} MGA</span>
                             </td>
                             <td>
                                 <c:if test="${cfg.dateModification != null}">
@@ -97,7 +105,7 @@
                 <c:if test="${empty configs}">
                     <tfoot>
                         <tr>
-                            <td colspan="5" class="text-muted text-center">
+                            <td colspan="7" class="text-muted text-center">
                                 <i class="fas fa-info-circle"></i> Aucune configuration trouvée.
                             </td>
                         </tr>

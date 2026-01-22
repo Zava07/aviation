@@ -44,6 +44,16 @@
                     <small class="form-text text-muted">
                         Valeur numérique utilisée pour calculer les points de vol (popularité).</small>
                 </div>
+
+                <div class="form-group">
+                    <label for="coutPubliciter">Coût Publicité <span class="required">*</span></label>
+                    <input type="number" step="0.01" id="coutPubliciter" name="coutPubliciter"
+                           class="form-control" required min="0"
+                           value="${config.coutPubliciter != null ? config.coutPubliciter : ''}"
+                           placeholder="Montant par défaut d'une campagne">
+                    <small class="form-text text-muted">
+                        Montant de référence appliqué lors des campagnes publicitaires (en MGA).</small>
+                </div>
             </div>
 
             <c:if test="${isEdit && config.dateModification != null}">

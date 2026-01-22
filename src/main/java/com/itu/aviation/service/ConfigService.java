@@ -51,6 +51,15 @@ public class ConfigService {
                 .orElse(0);
     }
 
+    /**
+     * Récupère le coût de publicité configuré
+     */
+    public Double getCoutPubliciter() {
+        return findCurrentConfig()
+                .map(Config::getCoutPubliciter)
+                .orElse(0.0);
+    }
+
     public Config create(Config config) {
         return configRepository.save(config);
     }
