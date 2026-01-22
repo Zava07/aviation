@@ -1,0 +1,4 @@
+INSERT INTO paiement_publicite
+(id_paiement_publicite, date_paiement, montant, reference, id_caisse, id_methode_paiement, id_societe)
+VALUES
+(1, '2025-12-15 00:00:00', 1000000.00, 'VIR-123', 1, 1, 1);

@@ -18,6 +18,9 @@ public class Config {
     @Column(name = "point_vol", nullable = false)
     private Integer pointVol;
 
+    @Column(name = "cout_publiciter", nullable = false)
+    private Double coutPubliciter;
+
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
 
@@ -52,6 +55,14 @@ public class Config {
 
     public void setPointVol(Integer pointVol) {
         this.pointVol = pointVol;
+    }
+
+    public Double getCoutPubliciter() {
+        return coutPubliciter;
+    }
+
+    public void setCoutPubliciter(Double coutPubliciter) {
+        this.coutPubliciter = coutPubliciter;
     }
 
     public LocalDateTime getDateModification() {

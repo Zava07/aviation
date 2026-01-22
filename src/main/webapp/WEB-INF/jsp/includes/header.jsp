@@ -165,6 +165,43 @@
             </ul>
         </nav>
         <nav class="nav-section">
+            <p class="nav-section-title">Gestion Publicite</p>
+            <ul class="nav-menu">
+                <li class="nav-item has-submenu ${currentPage == 'publicite-societes' || currentPage == 'publicite-videos' || currentPage == 'publicite-diffusions' ? 'open' : ''}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Publicite</span>
+                    </a>
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/publicites/societes" class="nav-link ${currentPage == 'publicite-societes' ? 'active' : ''}">
+                                <i class="fas fa-building"></i>
+                                <span>Societes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/publicites/videos" class="nav-link ${currentPage == 'publicite-videos' ? 'active' : ''}">
+                                <i class="fas fa-video"></i>
+                                <span>Videos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/publicites/diffusions" class="nav-link ${currentPage == 'publicite-diffusions' ? 'active' : ''}">
+                                <i class="fas fa-broadcast-tower"></i>
+                                <span>Diffusions</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/publicites/paiements" class="nav-link ${currentPage == 'publicite-paiements' ? 'active' : ''}">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Paiements</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <nav class="nav-section">
             <p class="nav-section-title">Gestion des Entites</p>
             <ul class="nav-menu">
                 <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' || currentPage == 'configurations' ? 'open' : ''}">
