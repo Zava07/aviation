@@ -207,6 +207,8 @@ public class GestionPubliciteController {
         if (societeId != null) {
             mav.addObject("paiements", paiementPubliciteService.getPaiementsBySociete(societeId));
             mav.addObject("selectedSocieteId", societeId);
+            // Ajouter le bilan par vol instance pour cette société
+            mav.addObject("bilanVolInstances", paiementPubliciteService.getBilanParVolInstance(societeId));
         } else {
             mav.addObject("paiements", paiementPubliciteService.findAll());
         }
@@ -232,16 +234,61 @@ public class GestionPubliciteController {
                 datePaiement = java.time.LocalDateTime.parse(datePaiementStr + "T00:00:00");
             }
             paiementPubliciteService.creerPaiement(societeId, montant, caisseId, reference, datePaiement);
-            redirect.addFlashAttribute("successMessage", "Paiement enregistré avec succès");
+            redirect.addFlashAttribute("successMessage", "Paiement enregistré avec répartition proportionnelle");
         } catch (Exception e) {
             redirect.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/publicites/paiements";
+        return "redirect:/publicites/paiements?societeId=" + societeId;
     }
 
     @GetMapping("/paiements/reste/{societeId}")
     @ResponseBody
     public BigDecimal getResteAPayer(@PathVariable Long societeId) {
         return paiementPubliciteService.getResteAPayerBySociete(societeId);
+    }
+
+    @GetMapping("/paiements/details/{paiementId}")
+    public ModelAndView detailsPaiement(@PathVariable Long paiementId) {
+        ModelAndView mav = new ModelAndView("publicite/paiement-details");
+        mav.addObject("pageTitle", "Détails du Paiement");
+        mav.addObject("currentPage", "publicite-paiements");
+        
+        var paiement = paiementPubliciteService.findById(paiementId);
+        mav.addObject("paiement", paiement);
+        mav.addObject("details", paiementPubliciteService.getDetailsPaiement(paiementId));
+        
+        return mav;
+    }
+
+    @GetMapping("/paiements/bilan-vol/{societeId}")
+    public ModelAndView bilanVolInstance(@PathVariable Long societeId) {
+        ModelAndView mav = new ModelAndView("publicite/bilan-vol-instance");
+        mav.addObject("pageTitle", "Bilan par Vol Instance");
+        mav.addObject("currentPage", "publicite-paiements");
+        
+        var societe = societeService.findById(societeId);
+        mav.addObject("societe", societe);
+        mav.addObject("bilanVolInstances", paiementPubliciteService.getBilanParVolInstance(societeId));
+        
+        // Calculer les totaux
+        var bilans = paiementPubliciteService.getBilanParVolInstance(societeId);
+        BigDecimal totalDiffusions = BigDecimal.ZERO;
+        BigDecimal totalPaye = BigDecimal.ZERO;
+        BigDecimal totalReste = BigDecimal.ZERO;
+        int totalNbDiffusions = 0;
+        
+        for (var b : bilans) {
+            totalDiffusions = totalDiffusions.add(b.getMontantTotal());
+            totalPaye = totalPaye.add(b.getMontantPaye());
+            totalReste = totalReste.add(b.getResteAPayer());
+            totalNbDiffusions += b.getNombreDiffusions();
+        }
+        
+        mav.addObject("totalDiffusions", totalDiffusions);
+        mav.addObject("totalPaye", totalPaye);
+        mav.addObject("totalReste", totalReste);
+        mav.addObject("totalNbDiffusions", totalNbDiffusions);
+        
+        return mav;
     }
 }

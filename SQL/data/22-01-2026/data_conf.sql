@@ -1,9 +1,10 @@
 INSERT INTO societe (nom_societe) VALUES
 ('Vaniala'),
 ('Lewis'),
-('Airtel Madagascar'),
-('Telma'),
-('Orange Madagascar');
+('Socobis'),
+('Jejoo');
+
+
 
 INSERT INTO publicite_video (titre, duree_seconde, id_societe) VALUES
 ('Pub Vaniala - Lait & Yaourt', 30, 1),
@@ -11,13 +12,12 @@ INSERT INTO publicite_video (titre, duree_seconde, id_societe) VALUES
 
 ('Pub Lewis - Mode 2025', 25, 2),
 
-('Pub Airtel - Internet 4G', 30, 3),
-('Pub Airtel - Mobile Money', 40, 3),
+('Pub Socobis - Biscuit', 30, 3),
+('Pub Socobis - Gateau', 40, 3),
 
-('Pub Telma - Fibre Optique', 35, 4),
+('Pub Jejoo - jejooo pub', 35, 4);
 
-('Pub Orange - Offres Jeunes', 30, 5),
-('Pub Orange - Orange Money', 45, 5);
+
 
 
 INSERT INTO etat_avion (etat) VALUES 

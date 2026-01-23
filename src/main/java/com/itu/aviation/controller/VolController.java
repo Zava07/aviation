@@ -39,6 +39,9 @@ public class VolController {
     @Autowired
     private com.itu.aviation.repository.PubliciteRepository publiciteRepository;
 
+    @Autowired
+    private com.itu.aviation.repository.DetailPaiementPubliciteRepository detailPaiementPubliciteRepository;
+
     // Removed StatusVolRepository as it is no longer needed for route-level Vol entity.
 
     @GetMapping
@@ -103,11 +106,25 @@ public class VolController {
                 } catch (Exception ex) { /* ignore */ }
             }
 
+            // Calculate paid ads for this vol (sum of all detail paiements for all instances of this vol)
+            java.math.BigDecimal adsPaid = java.math.BigDecimal.ZERO;
+            for (com.itu.aviation.entity.VolInstance vi : instances) {
+                try {
+                    java.util.List<com.itu.aviation.entity.DetailPaiementPublicite> details = 
+                        detailPaiementPubliciteRepository.findByVolInstanceId(vi.getId());
+                    for (com.itu.aviation.entity.DetailPaiementPublicite d : details) {
+                        if (d.getMontantPaye() != null) adsPaid = adsPaid.add(d.getMontantPaye());
+                    }
+                } catch (Exception ex) { /* ignore */ }
+            }
+
             java.math.BigDecimal total = ticketsSum.add(adsSum);
             java.util.Map<String, Object> m = new java.util.HashMap<>();
             m.put("vol", v);
             m.put("ticketsSum", ticketsSum);
             m.put("adsSum", adsSum);
+            m.put("adsPaid", adsPaid);
+            m.put("adsRest", adsSum.subtract(adsPaid));
             m.put("total", total);
             volCaList.add(m);
         }
@@ -239,6 +256,18 @@ public class VolController {
                 } catch (Exception ex) { /* ignore */ }
                 m.put("ads", ads);
 
+                // paid ads for this instance
+                java.math.BigDecimal adsPaid = java.math.BigDecimal.ZERO;
+                try {
+                    java.util.List<com.itu.aviation.entity.DetailPaiementPublicite> details = 
+                        detailPaiementPubliciteRepository.findByVolInstanceId(vi.getId());
+                    for (com.itu.aviation.entity.DetailPaiementPublicite d : details) {
+                        if (d.getMontantPaye() != null) adsPaid = adsPaid.add(d.getMontantPaye());
+                    }
+                } catch (Exception ex) { /* ignore */ }
+                m.put("adsPaid", adsPaid);
+                m.put("adsRest", ads.subtract(adsPaid));
+
                 m.put("total", tickets.add(ads));
                 return m;
             }).toList();
@@ -246,13 +275,17 @@ public class VolController {
         // compute totals for this vol
         java.math.BigDecimal totalTickets = java.math.BigDecimal.ZERO;
         java.math.BigDecimal totalAds = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalAdsPaid = java.math.BigDecimal.ZERO;
         for (java.util.Map<String, Object> mv : volInstancesView) {
             Object t = mv.get("tickets"); if (t instanceof java.math.BigDecimal) totalTickets = totalTickets.add((java.math.BigDecimal) t);
             Object a = mv.get("ads"); if (a instanceof java.math.BigDecimal) totalAds = totalAds.add((java.math.BigDecimal) a);
+            Object ap = mv.get("adsPaid"); if (ap instanceof java.math.BigDecimal) totalAdsPaid = totalAdsPaid.add((java.math.BigDecimal) ap);
         }
         mav.addObject("volInstances", volInstancesView);
         mav.addObject("totalTickets", totalTickets);
         mav.addObject("totalAds", totalAds);
+        mav.addObject("totalAdsPaid", totalAdsPaid);
+        mav.addObject("totalAdsRest", totalAds.subtract(totalAdsPaid));
         mav.addObject("totalCA", totalTickets.add(totalAds));
 
         return mav;
