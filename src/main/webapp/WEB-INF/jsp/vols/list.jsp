@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
 
 <div class="card">
@@ -69,6 +70,7 @@
                                 <td>
                                     <a href="${pageContext.request.contextPath}/vols/edit/${vol.id}" class="btn btn-sm btn-info">Modifier</a>
                                     <a href="${pageContext.request.contextPath}/vol-instances?volId=${vol.id}" class="btn btn-sm btn-secondary">Instances</a>
+                                    <a href="${pageContext.request.contextPath}/vols/details/${vol.id}" class="btn btn-sm btn-primary">Détails</a>
                                     <form method="post" action="${pageContext.request.contextPath}/vols/delete/${vol.id}" style="display:inline">
                                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Confirmer suppression ?')">Supprimer</button>
                                     </form>
@@ -83,7 +85,42 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- CA per vol summary -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3 class="card-title">Chiffre d'affaire par Vol</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Vol</th>
+                                <th>Origine</th>
+                                <th>Destination</th>
+                                <th>CA Billets</th>
+                                <th>CA Publicité</th>
+                                <th>Total CA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="m" items="${volCaList}">
+                                <tr>
+                                    <td><strong>${m.vol.numeroVol}</strong></td>
+                                    <td>${m.vol.aeroportOrigine != null ? m.vol.aeroportOrigine.nomAeroport : ''}</td>
+                                    <td>${m.vol.aeroportDestination != null ? m.vol.aeroportDestination.nomAeroport : ''}</td>
+                                    <td><fmt:formatNumber value="${m.ticketsSum}" type="number" minFractionDigits="2" maxFractionDigits="2"/> MGA</td>
+                                    <td><fmt:formatNumber value="${m.adsSum}" type="number" minFractionDigits="2" maxFractionDigits="2"/> MGA</td>
+                                    <td><fmt:formatNumber value="${m.total}" type="number" minFractionDigits="2" maxFractionDigits="2"/> MGA</td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
-
 <%@ include file="/WEB-INF/jsp/includes/footer.jsp" %>

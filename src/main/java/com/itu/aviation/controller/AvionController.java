@@ -53,6 +53,9 @@ public class AvionController {
     @Autowired
     private com.itu.aviation.repository.BilletRepository billetRepository;
 
+    @Autowired
+    private com.itu.aviation.repository.PubliciteRepository publiciteRepository;
+
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String codeAvion,
                              @RequestParam(required = false) Long modeleId,
@@ -298,9 +301,31 @@ public class AvionController {
                         // ignore errors and leave total as zero
                     }
                     m.put("totalPaidEmis", totalPaidEmis);
+
+                    // compute total publicité (CA réel) for this vol instance
+                    java.math.BigDecimal totalAds = java.math.BigDecimal.ZERO;
+                    try {
+                        java.util.List<com.itu.aviation.entity.Publicite> pubList = publiciteRepository.findByVolInstance(vi);
+                        for (com.itu.aviation.entity.Publicite p : pubList) {
+                            if (p.getMontant() != null) totalAds = totalAds.add(new java.math.BigDecimal(p.getMontant()));
+                        }
+                    } catch (Exception ex) {
+                        // ignore
+                    }
+                    m.put("totalAds", totalAds);
                     return m;
                 }).toList();
         mav.addObject("volInstances", volInstancesView);
+
+        // compute total publicité (CA réel) for the whole avion (sum of volInstances)
+        java.math.BigDecimal avionTotalAds = java.math.BigDecimal.ZERO;
+        for (java.util.Map<String, Object> viMap : volInstancesView) {
+            Object ta = viMap.get("totalAds");
+            if (ta instanceof java.math.BigDecimal) {
+                avionTotalAds = avionTotalAds.add((java.math.BigDecimal) ta);
+            }
+        }
+        mav.addObject("avionTotalAds", avionTotalAds);
 
         return mav;
     }

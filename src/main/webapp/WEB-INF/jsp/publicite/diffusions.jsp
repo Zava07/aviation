@@ -101,7 +101,7 @@
                     <select id="volInstanceId" name="volInstanceId" class="form-control" required>
                         <option value="">-- Sélectionner --</option>
                         <c:forEach var="vi" items="${volInstances}">
-                            <option value="${vi.id}">
+                            <option value="${vi.id}" ${param.volInstanceId != null && param.volInstanceId == vi.id ? 'selected' : ''}>
                                 ${vi.vol.numeroVol} - ${vi.avion.codeAvion} 
                                 (${vi.dateDepart.toLocalDate()} ${vi.dateDepart.toLocalTime()})
                             </option>

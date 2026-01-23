@@ -98,13 +98,25 @@
         
         <h5 style="margin-top:16px">Instances de Vol associées</h5>
         <c:if test="${not empty volInstances}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <div>
+                    <strong>Nombre d'instances:</strong> ${volInstances.size()}
+                </div>
+                <div>
+                    <strong>CA Publicité (avion):</strong>
+                    <span class="ca-total-card">
+                        <fmt:formatNumber value="${avionTotalAds}" type="number" minFractionDigits="2" maxFractionDigits="2"/> MGA
+                    </span>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Vol</th>
-                            <th>CA</th>
+                            <th>CA Billets</th>
+                            <th>CA Publicité</th>
                             <th>Date Départ</th>
                             <th>Date Arrivée</th>
                         </tr>
@@ -117,6 +129,12 @@
                                 <td>
                                     <fmt:formatNumber value="${vi.totalPaidEmis}" type="number" minFractionDigits="2" maxFractionDigits="2"/>
                                     &nbsp;MGA
+                                </td>
+                                <td class="ca-cell">
+                                    <span class="ca-badge">
+                                        <fmt:formatNumber value="${vi.totalAds}" type="number" minFractionDigits="2" maxFractionDigits="2"/>
+                                    </span>
+                                     &nbsp;MGA
                                 </td>
                                 <td><fmt:formatDate value="${vi.dateDepartDate}" pattern="dd/MM/yyyy HH:mm"/></td>
                                 <td><fmt:formatDate value="${vi.dateArriveeDate}" pattern="dd/MM/yyyy HH:mm"/></td>
