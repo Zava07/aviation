@@ -493,4 +493,4 @@ CREATE TABLE vente_produit_extra (
     date_achat TIMESTAMP DEFAULT NOW()
 );
 
-TRUNCATE TABLE vente_produit_extra RESTART IDENTITY CASADE;
+TRUNCATE TABLE vente_produit_extra RESTART IDENTITY CASCADE;
