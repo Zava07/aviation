@@ -56,6 +56,7 @@
     .amt.ads { color: #ffd93d; }
     .amt.paid { color: #6bcb77; }
     .amt.rest { color: #ff6b6b; }
+    .amt.extras { color: #ff9ff3; }
     .amt.total { color: white; font-size: 0.95rem; }
     .progress-bar-sm { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 5px; margin-top: 4px; overflow: hidden; }
     .progress-bar-sm .fill { height: 100%; background: #6bcb77; border-radius: 5px; }
@@ -72,7 +73,29 @@
     
     <div class="filter-card">
         <form method="get" action="${pageContext.request.contextPath}/vols" class="filter-form">
-            <input type="date" name="date" value="${param.date}" placeholder="Date" />
+            <input type="date" name="date" value="${filterDate}" placeholder="Date" />
+            <select name="month">
+                <option value="">Tous les mois</option>
+                <option value="1" <c:if test="${filterMonth == 1}">selected</c:if>>Janvier</option>
+                <option value="2" <c:if test="${filterMonth == 2}">selected</c:if>>Février</option>
+                <option value="3" <c:if test="${filterMonth == 3}">selected</c:if>>Mars</option>
+                <option value="4" <c:if test="${filterMonth == 4}">selected</c:if>>Avril</option>
+                <option value="5" <c:if test="${filterMonth == 5}">selected</c:if>>Mai</option>
+                <option value="6" <c:if test="${filterMonth == 6}">selected</c:if>>Juin</option>
+                <option value="7" <c:if test="${filterMonth == 7}">selected</c:if>>Juillet</option>
+                <option value="8" <c:if test="${filterMonth == 8}">selected</c:if>>Août</option>
+                <option value="9" <c:if test="${filterMonth == 9}">selected</c:if>>Septembre</option>
+                <option value="10" <c:if test="${filterMonth == 10}">selected</c:if>>Octobre</option>
+                <option value="11" <c:if test="${filterMonth == 11}">selected</c:if>>Novembre</option>
+                <option value="12" <c:if test="${filterMonth == 12}">selected</c:if>>Décembre</option>
+            </select>
+            <select name="year">
+                <option value="">Toutes les années</option>
+                <option value="2024" <c:if test="${filterYear == 2024}">selected</c:if>>2024</option>
+                <option value="2025" <c:if test="${filterYear == 2025}">selected</c:if>>2025</option>
+                <option value="2026" <c:if test="${filterYear == 2026}">selected</c:if>>2026</option>
+                <option value="2027" <c:if test="${filterYear == 2027}">selected</c:if>>2027</option>
+            </select>
             <select name="destinationId">
                 <option value="">Toutes destinations</option>
                 <c:forEach var="a" items="${aeroports}">
@@ -123,7 +146,7 @@
         <div class="card-head"><h3><i class="fas fa-chart-pie"></i> Chiffre d'Affaires par Vol</h3></div>
         <table class="ca-table">
             <thead>
-                <tr><th>Vol</th><th>Route</th><th>CA Billets</th><th>CA Publicité</th><th>Pub Payé</th><th>Pub Reste</th><th>Total CA</th></tr>
+                <tr><th>Vol</th><th>Route</th><th>CA Billets</th><th>CA Publicité</th><th>Pub Payé</th><th>Pub Reste</th><th>CA Produits Extra</th><th>Total CA</th></tr>
             </thead>
             <tbody>
                 <c:forEach var="m" items="${volCaList}">
@@ -135,6 +158,7 @@
                         <td class="amt ads"><fmt:formatNumber value="${m.adsSum}" type="number" groupingUsed="true"/> MGA</td>
                         <td class="amt paid"><fmt:formatNumber value="${m.adsPaid}" type="number" groupingUsed="true"/> MGA<div class="progress-bar-sm"><div class="fill" style="width:${pct}%"></div></div></td>
                         <td class="amt rest"><fmt:formatNumber value="${m.adsRest}" type="number" groupingUsed="true"/> MGA</td>
+                        <td class="amt extras"><fmt:formatNumber value="${m.extrasSum}" type="number" groupingUsed="true"/> MGA</td>
                         <td class="amt total"><fmt:formatNumber value="${m.total}" type="number" groupingUsed="true"/> MGA</td>
                     </tr>
                 </c:forEach>
@@ -144,10 +168,11 @@
                     <td class="amt ads"><fmt:formatNumber value="${totalAdsAll}" type="number" groupingUsed="true"/> MGA</td>
                     <td class="amt paid"><fmt:formatNumber value="${totalAdsPaidAll}" type="number" groupingUsed="true"/> MGA</td>
                     <td class="amt rest"><fmt:formatNumber value="${totalAdsRestAll}" type="number" groupingUsed="true"/> MGA</td>
+                    <td class="amt extras"><fmt:formatNumber value="${totalExtrasAll}" type="number" groupingUsed="true"/> MGA</td>
                     <td class="amt total"><fmt:formatNumber value="${totalCAAll}" type="number" groupingUsed="true"/> MGA</td>
                 </tr>
                 <c:if test="${empty volCaList}">
-                    <tr><td colspan="7"><div class="empty-state"><i class="fas fa-chart-bar"></i><p>Aucune donnée</p></div></td></tr>
+                    <tr><td colspan="8"><div class="empty-state"><i class="fas fa-chart-bar"></i><p>Aucune donnée</p></div></td></tr>
                 </c:if>
             </tbody>
         </table>

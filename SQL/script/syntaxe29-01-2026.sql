@@ -483,12 +483,14 @@ CREATE TABLE produit_extra (
     prix NUMERIC(10,2) NOT NULL
 );
 
+
+TRUNCATE TABLE vente_produit_extra RESTART IDENTITY CASADE;
 CREATE TABLE vente_produit_extra (
     id_vente_produit_extra SERIAL PRIMARY KEY,
     id_produit_extra INT NOT NULL REFERENCES produit_extra(id_produit_extra),
     id_vol_instance INT NOT NULL REFERENCES vol_instance(id_vol_instance),
     quantite INT NOT NULL,
     prix_total NUMERIC(12,2) NOT NULL,
-    date_achat TIMESTAMP DEFAULT NOW(),
+    date_achat TIMESTAMP DEFAULT NOW()
 );
 

@@ -42,10 +42,15 @@ public class VolController {
     @Autowired
     private com.itu.aviation.repository.DetailPaiementPubliciteRepository detailPaiementPubliciteRepository;
 
+    @Autowired
+    private com.itu.aviation.repository.VenteProduitExtraRepository venteProduitExtraRepository;
+
     // Removed StatusVolRepository as it is no longer needed for route-level Vol entity.
 
     @GetMapping
     public ModelAndView list(@RequestParam(required = false) String date,
+                             @RequestParam(required = false) Integer month,
+                             @RequestParam(required = false) Integer year,
                              @RequestParam(required = false) Long destinationId,
                              @RequestParam(required = false) Long statusId) { // statusId parameter removed
         ModelAndView mav = new ModelAndView("vols/list");
@@ -64,20 +69,28 @@ public class VolController {
             mav.addObject("filterDate", date);
         }
         final java.time.LocalDate filterDateRef = filterDate;
+        final Integer filterMonth = month;
+        final Integer filterYear = year;
+        if (month != null) mav.addObject("filterMonth", month);
+        if (year != null) mav.addObject("filterYear", year);
 
-        // For each vol compute aggregated CA: tickets, publicity, total
+        // For each vol compute aggregated CA: tickets, publicity, produits extra, total
         java.util.List<java.util.Map<String, Object>> volCaList = new java.util.ArrayList<>();
         for (com.itu.aviation.entity.Vol v : vols) {
             java.math.BigDecimal ticketsSum = java.math.BigDecimal.ZERO;
             java.math.BigDecimal adsSum = java.math.BigDecimal.ZERO;
+            java.math.BigDecimal extrasSum = java.math.BigDecimal.ZERO;
 
             // find instances for this vol
             java.util.List<com.itu.aviation.entity.VolInstance> instances = volInstanceService.findAll().stream()
                     .filter(vi -> vi.getVol() != null && vi.getVol().getId() != null && vi.getVol().getId().equals(v.getId()))
                     .filter(vi -> {
-                        if (filterDateRef == null) return true;
-                        if (vi.getDateDepart() == null) return false;
-                        return vi.getDateDepart().toLocalDate().equals(filterDateRef);
+                        if (vi.getDateDepart() == null) return filterDateRef == null && filterMonth == null && filterYear == null;
+                        if (filterDateRef != null) return vi.getDateDepart().toLocalDate().equals(filterDateRef);
+                        if (filterYear != null && filterMonth != null) return vi.getDateDepart().getYear() == filterYear && vi.getDateDepart().getMonthValue() == filterMonth;
+                        if (filterYear != null) return vi.getDateDepart().getYear() == filterYear;
+                        if (filterMonth != null) return vi.getDateDepart().getMonthValue() == filterMonth;
+                        return true;
                     })
                     .toList();
 
@@ -104,6 +117,14 @@ public class VolController {
                         if (p.getMontant() != null) adsSum = adsSum.add(new java.math.BigDecimal(p.getMontant()));
                     }
                 } catch (Exception ex) { /* ignore */ }
+
+                // produits extra revenue for this instance
+                try {
+                    java.util.List<com.itu.aviation.entity.VenteProduitExtra> ventesList = venteProduitExtraRepository.findByVolInstanceId(vi.getId());
+                    for (com.itu.aviation.entity.VenteProduitExtra vpe : ventesList) {
+                        if (vpe.getPrixTotal() != null) extrasSum = extrasSum.add(vpe.getPrixTotal());
+                    }
+                } catch (Exception ex) { /* ignore */ }
             }
 
             // Calculate paid ads for this vol (sum of all detail paiements for all instances of this vol)
@@ -118,13 +139,14 @@ public class VolController {
                 } catch (Exception ex) { /* ignore */ }
             }
 
-            java.math.BigDecimal total = ticketsSum.add(adsSum);
+            java.math.BigDecimal total = ticketsSum.add(adsSum).add(extrasSum);
             java.util.Map<String, Object> m = new java.util.HashMap<>();
             m.put("vol", v);
             m.put("ticketsSum", ticketsSum);
             m.put("adsSum", adsSum);
             m.put("adsPaid", adsPaid);
             m.put("adsRest", adsSum.subtract(adsPaid));
+            m.put("extrasSum", extrasSum);
             m.put("total", total);
             volCaList.add(m);
         }
@@ -133,14 +155,16 @@ public class VolController {
         java.math.BigDecimal totalTicketsAll = java.math.BigDecimal.ZERO;
         java.math.BigDecimal totalAdsAll = java.math.BigDecimal.ZERO;
         java.math.BigDecimal totalAdsPaidAll = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalExtrasAll = java.math.BigDecimal.ZERO;
         java.math.BigDecimal totalCAAll = java.math.BigDecimal.ZERO;
         for (java.util.Map<String, Object> m : volCaList) {
             Object ts = m.get("ticketsSum"); if (ts instanceof java.math.BigDecimal) totalTicketsAll = totalTicketsAll.add((java.math.BigDecimal) ts);
             Object as = m.get("adsSum"); if (as instanceof java.math.BigDecimal) totalAdsAll = totalAdsAll.add((java.math.BigDecimal) as);
             Object ap = m.get("adsPaid"); if (ap instanceof java.math.BigDecimal) totalAdsPaidAll = totalAdsPaidAll.add((java.math.BigDecimal) ap);
+            Object ex = m.get("extrasSum"); if (ex instanceof java.math.BigDecimal) totalExtrasAll = totalExtrasAll.add((java.math.BigDecimal) ex);
         }
         java.math.BigDecimal totalAdsRestAll = totalAdsAll.subtract(totalAdsPaidAll);
-        totalCAAll = totalTicketsAll.add(totalAdsAll);
+        totalCAAll = totalTicketsAll.add(totalAdsAll).add(totalExtrasAll);
 
         mav.addObject("vols", vols);
         mav.addObject("volCaList", volCaList);
@@ -148,6 +172,7 @@ public class VolController {
         mav.addObject("totalAdsAll", totalAdsAll);
         mav.addObject("totalAdsPaidAll", totalAdsPaidAll);
         mav.addObject("totalAdsRestAll", totalAdsRestAll);
+        mav.addObject("totalExtrasAll", totalExtrasAll);
         mav.addObject("totalCAAll", totalCAAll);
         mav.addObject("avions", avionService.findAll());
         mav.addObject("aeroports", aeroportRepository.findAll());
@@ -206,7 +231,10 @@ public class VolController {
     }
 
     @GetMapping("/details/{id}")
-    public ModelAndView details(@PathVariable Long id, @RequestParam(required = false) String date) {
+    public ModelAndView details(@PathVariable Long id, 
+                                @RequestParam(required = false) String date,
+                                @RequestParam(required = false) Integer month,
+                                @RequestParam(required = false) Integer year) {
         ModelAndView mav = new ModelAndView("vols/details");
         mav.addObject("pageTitle", "Détails Vol");
         mav.addObject("currentPage", "vols");
@@ -220,14 +248,21 @@ public class VolController {
             mav.addObject("filterDate", date);
         }
         final java.time.LocalDate filterDateRef = filterDate;
+        final Integer filterMonth = month;
+        final Integer filterYear = year;
+        if (month != null) mav.addObject("filterMonth", month);
+        if (year != null) mav.addObject("filterYear", year);
 
         // build vol instances view with CA per instance
         java.util.List<java.util.Map<String, Object>> volInstancesView = volInstanceService.findAll().stream()
             .filter(vi -> vi.getVol() != null && vi.getVol().getId() != null && vi.getVol().getId().equals(id))
             .filter(vi -> {
-                if (filterDateRef == null) return true;
-                if (vi.getDateDepart() == null) return false;
-                return vi.getDateDepart().toLocalDate().equals(filterDateRef);
+                if (vi.getDateDepart() == null) return filterDateRef == null && filterMonth == null && filterYear == null;
+                if (filterDateRef != null) return vi.getDateDepart().toLocalDate().equals(filterDateRef);
+                if (filterYear != null && filterMonth != null) return vi.getDateDepart().getYear() == filterYear && vi.getDateDepart().getMonthValue() == filterMonth;
+                if (filterYear != null) return vi.getDateDepart().getYear() == filterYear;
+                if (filterMonth != null) return vi.getDateDepart().getMonthValue() == filterMonth;
+                return true;
             })
             .sorted((a, b) -> {
                 if (a.getDateDepart() == null && b.getDateDepart() == null) return 0;
@@ -286,7 +321,17 @@ public class VolController {
                 m.put("adsPaid", adsPaid);
                 m.put("adsRest", ads.subtract(adsPaid));
 
-                m.put("total", tickets.add(ads));
+                // produits extra CA for this instance
+                java.math.BigDecimal extras = java.math.BigDecimal.ZERO;
+                try {
+                    java.util.List<com.itu.aviation.entity.VenteProduitExtra> ventesList = venteProduitExtraRepository.findByVolInstanceId(vi.getId());
+                    for (com.itu.aviation.entity.VenteProduitExtra vpe : ventesList) {
+                        if (vpe.getPrixTotal() != null) extras = extras.add(vpe.getPrixTotal());
+                    }
+                } catch (Exception ex) { /* ignore */ }
+                m.put("extras", extras);
+
+                m.put("total", tickets.add(ads).add(extras));
                 return m;
             }).toList();
 
@@ -294,17 +339,20 @@ public class VolController {
         java.math.BigDecimal totalTickets = java.math.BigDecimal.ZERO;
         java.math.BigDecimal totalAds = java.math.BigDecimal.ZERO;
         java.math.BigDecimal totalAdsPaid = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalExtras = java.math.BigDecimal.ZERO;
         for (java.util.Map<String, Object> mv : volInstancesView) {
             Object t = mv.get("tickets"); if (t instanceof java.math.BigDecimal) totalTickets = totalTickets.add((java.math.BigDecimal) t);
             Object a = mv.get("ads"); if (a instanceof java.math.BigDecimal) totalAds = totalAds.add((java.math.BigDecimal) a);
             Object ap = mv.get("adsPaid"); if (ap instanceof java.math.BigDecimal) totalAdsPaid = totalAdsPaid.add((java.math.BigDecimal) ap);
+            Object ex = mv.get("extras"); if (ex instanceof java.math.BigDecimal) totalExtras = totalExtras.add((java.math.BigDecimal) ex);
         }
         mav.addObject("volInstances", volInstancesView);
         mav.addObject("totalTickets", totalTickets);
         mav.addObject("totalAds", totalAds);
         mav.addObject("totalAdsPaid", totalAdsPaid);
         mav.addObject("totalAdsRest", totalAds.subtract(totalAdsPaid));
-        mav.addObject("totalCA", totalTickets.add(totalAds));
+        mav.addObject("totalExtras", totalExtras);
+        mav.addObject("totalCA", totalTickets.add(totalAds).add(totalExtras));
 
         return mav;
     }

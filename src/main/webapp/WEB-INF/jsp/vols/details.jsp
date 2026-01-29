@@ -21,6 +21,7 @@
     .stat-card.ads { background: linear-gradient(135deg, #ffd93d, #f9c80e); }
     .stat-card.paid { background: linear-gradient(135deg, #6bcb77, #4ade80); }
     .stat-card.rest { background: linear-gradient(135deg, #ff6b6b, #f87171); }
+    .stat-card.extras { background: linear-gradient(135deg, #ff9ff3, #f368e0); }
     .stat-card.total { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
     .stat-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; opacity: 0.8; margin-bottom: 5px; }
     .stat-value { font-size: 1.1rem; font-weight: 700; }
@@ -45,6 +46,7 @@
     .amt.ads { color: #f39c12; }
     .amt.paid { color: #27ae60; }
     .amt.rest { color: #e74c3c; }
+    .amt.extras { color: #e056fd; }
     .amt.total { color: #8e44ad; font-weight: 700; }
     
     .progress-bar-sm { width: 100%; height: 4px; background: #eee; border-radius: 5px; margin-top: 4px; overflow: hidden; }
@@ -86,6 +88,10 @@
                 <div class="stat-label">Pub Reste</div>
                 <div class="stat-value"><fmt:formatNumber value="${totalAdsRest}" type="number" groupingUsed="true"/> MGA</div>
             </div>
+            <div class="stat-card extras">
+                <div class="stat-label">CA Produits Extra</div>
+                <div class="stat-value"><fmt:formatNumber value="${totalExtras}" type="number" groupingUsed="true"/> MGA</div>
+            </div>
             <div class="stat-card total">
                 <div class="stat-label">Total CA</div>
                 <div class="stat-value"><fmt:formatNumber value="${totalCA}" type="number" groupingUsed="true"/> MGA</div>
@@ -93,9 +99,32 @@
         </div>
         
         <form method="get" action="${pageContext.request.contextPath}/vols/details/${vol.id}" class="filter-row">
-            <label><i class="fas fa-filter"></i> Filtrer par date :</label>
-            <input type="date" name="date" value="${filterDate}" />
+            <label><i class="fas fa-filter"></i> Filtrer :</label>
+            <input type="date" name="date" value="${filterDate}" placeholder="Date" />
+            <select name="month" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                <option value="">Tous les mois</option>
+                <option value="1" <c:if test="${filterMonth == 1}">selected</c:if>>Janvier</option>
+                <option value="2" <c:if test="${filterMonth == 2}">selected</c:if>>Février</option>
+                <option value="3" <c:if test="${filterMonth == 3}">selected</c:if>>Mars</option>
+                <option value="4" <c:if test="${filterMonth == 4}">selected</c:if>>Avril</option>
+                <option value="5" <c:if test="${filterMonth == 5}">selected</c:if>>Mai</option>
+                <option value="6" <c:if test="${filterMonth == 6}">selected</c:if>>Juin</option>
+                <option value="7" <c:if test="${filterMonth == 7}">selected</c:if>>Juillet</option>
+                <option value="8" <c:if test="${filterMonth == 8}">selected</c:if>>Août</option>
+                <option value="9" <c:if test="${filterMonth == 9}">selected</c:if>>Septembre</option>
+                <option value="10" <c:if test="${filterMonth == 10}">selected</c:if>>Octobre</option>
+                <option value="11" <c:if test="${filterMonth == 11}">selected</c:if>>Novembre</option>
+                <option value="12" <c:if test="${filterMonth == 12}">selected</c:if>>Décembre</option>
+            </select>
+            <select name="year" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+                <option value="">Toutes les années</option>
+                <option value="2024" <c:if test="${filterYear == 2024}">selected</c:if>>2024</option>
+                <option value="2025" <c:if test="${filterYear == 2025}">selected</c:if>>2025</option>
+                <option value="2026" <c:if test="${filterYear == 2026}">selected</c:if>>2026</option>
+                <option value="2027" <c:if test="${filterYear == 2027}">selected</c:if>>2027</option>
+            </select>
             <button type="submit" class="btn-apply"><i class="fas fa-check"></i> Appliquer</button>
+            <a href="${pageContext.request.contextPath}/vols/details/${vol.id}" style="padding: 8px 16px; background: #ecf0f1; color: #7f8c8d; border-radius: 6px; text-decoration: none; font-weight: 500;"><i class="fas fa-undo"></i> Réinitialiser</a>
         </form>
     </div>
     
@@ -114,6 +143,7 @@
                             <th>Pub Total</th>
                             <th>Pub Payé</th>
                             <th>Pub Reste</th>
+                            <th>Produits Extra</th>
                             <th>Total CA</th>
                             <th></th>
                         </tr>
@@ -133,6 +163,7 @@
                                     <div class="progress-bar-sm"><div class="fill" style="width:${pct}%"></div></div>
                                 </td>
                                 <td class="amt rest"><fmt:formatNumber value="${vi.adsRest}" type="number" groupingUsed="true"/> MGA</td>
+                                <td class="amt extras"><fmt:formatNumber value="${vi.extras}" type="number" groupingUsed="true"/> MGA</td>
                                 <td class="amt total"><fmt:formatNumber value="${vi.total}" type="number" groupingUsed="true"/> MGA</td>
                                 <td><a href="${pageContext.request.contextPath}/publicites/diffusions?volInstanceId=${vi.id}&amp;year=${vi.dateDepartYear != null ? vi.dateDepartYear : ''}&amp;month=${vi.dateDepartMonth != null ? vi.dateDepartMonth : ''}" class="btn-diffusion"><i class="fas fa-ad"></i> Diffusions</a></td>
                             </tr>
