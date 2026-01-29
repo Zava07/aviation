@@ -129,8 +129,26 @@ public class VolController {
             volCaList.add(m);
         }
 
+        // compute aggregate totals across vols
+        java.math.BigDecimal totalTicketsAll = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalAdsAll = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalAdsPaidAll = java.math.BigDecimal.ZERO;
+        java.math.BigDecimal totalCAAll = java.math.BigDecimal.ZERO;
+        for (java.util.Map<String, Object> m : volCaList) {
+            Object ts = m.get("ticketsSum"); if (ts instanceof java.math.BigDecimal) totalTicketsAll = totalTicketsAll.add((java.math.BigDecimal) ts);
+            Object as = m.get("adsSum"); if (as instanceof java.math.BigDecimal) totalAdsAll = totalAdsAll.add((java.math.BigDecimal) as);
+            Object ap = m.get("adsPaid"); if (ap instanceof java.math.BigDecimal) totalAdsPaidAll = totalAdsPaidAll.add((java.math.BigDecimal) ap);
+        }
+        java.math.BigDecimal totalAdsRestAll = totalAdsAll.subtract(totalAdsPaidAll);
+        totalCAAll = totalTicketsAll.add(totalAdsAll);
+
         mav.addObject("vols", vols);
         mav.addObject("volCaList", volCaList);
+        mav.addObject("totalTicketsAll", totalTicketsAll);
+        mav.addObject("totalAdsAll", totalAdsAll);
+        mav.addObject("totalAdsPaidAll", totalAdsPaidAll);
+        mav.addObject("totalAdsRestAll", totalAdsRestAll);
+        mav.addObject("totalCAAll", totalCAAll);
         mav.addObject("avions", avionService.findAll());
         mav.addObject("aeroports", aeroportRepository.findAll());
         // Removed statusList as it is no longer needed for route-level Vol entity.

@@ -138,6 +138,14 @@
                         <td class="amt total"><fmt:formatNumber value="${m.total}" type="number" groupingUsed="true"/> MGA</td>
                     </tr>
                 </c:forEach>
+                <tr style="font-weight:700; background: rgba(255,255,255,0.06);">
+                    <td colspan="2">Total</td>
+                    <td class="amt tickets"><fmt:formatNumber value="${totalTicketsAll}" type="number" groupingUsed="true"/> MGA</td>
+                    <td class="amt ads"><fmt:formatNumber value="${totalAdsAll}" type="number" groupingUsed="true"/> MGA</td>
+                    <td class="amt paid"><fmt:formatNumber value="${totalAdsPaidAll}" type="number" groupingUsed="true"/> MGA</td>
+                    <td class="amt rest"><fmt:formatNumber value="${totalAdsRestAll}" type="number" groupingUsed="true"/> MGA</td>
+                    <td class="amt total"><fmt:formatNumber value="${totalCAAll}" type="number" groupingUsed="true"/> MGA</td>
+                </tr>
                 <c:if test="${empty volCaList}">
                     <tr><td colspan="7"><div class="empty-state"><i class="fas fa-chart-bar"></i><p>Aucune donnée</p></div></td></tr>
                 </c:if>
