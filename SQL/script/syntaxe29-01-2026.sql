@@ -484,7 +484,6 @@ CREATE TABLE produit_extra (
 );
 
 
-TRUNCATE TABLE vente_produit_extra RESTART IDENTITY CASADE;
 CREATE TABLE vente_produit_extra (
     id_vente_produit_extra SERIAL PRIMARY KEY,
     id_produit_extra INT NOT NULL REFERENCES produit_extra(id_produit_extra),
@@ -494,3 +493,4 @@ CREATE TABLE vente_produit_extra (
     date_achat TIMESTAMP DEFAULT NOW()
 );
 
+TRUNCATE TABLE vente_produit_extra RESTART IDENTITY CASADE;
