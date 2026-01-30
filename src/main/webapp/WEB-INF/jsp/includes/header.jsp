@@ -202,6 +202,31 @@
             </ul>
         </nav>
         <nav class="nav-section">
+            <p class="nav-section-title">Produits Extra</p>
+            <ul class="nav-menu">
+                <li class="nav-item has-submenu ${currentPage == 'produitsextra' || currentPage == 'ventesproduitsextra' ? 'open' : ''}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-box-open"></i>
+                        <span>Produits & Ventes</span>
+                    </a>
+                    <ul class="submenu">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/produits-extra" class="nav-link ${currentPage == 'produitsextra' ? 'active' : ''}">
+                                <i class="fas fa-boxes"></i>
+                                <span>Produits Extra</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/ventes-produits-extra" class="nav-link ${currentPage == 'ventesproduitsextra' ? 'active' : ''}">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Ventes</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <nav class="nav-section">
             <p class="nav-section-title">Gestion des Entites</p>
             <ul class="nav-menu">
                 <li class="nav-item has-submenu ${currentPage == 'passagers' || currentPage == 'reservations' || currentPage == 'billets' || currentPage == 'paiements' || currentPage == 'personnel' || currentPage == 'classes' || currentPage == 'modeles' || currentPage == 'sieges' || currentPage == 'prix' || currentPage == 'type-passagers' || currentPage == 'configurations' ? 'open' : ''}">

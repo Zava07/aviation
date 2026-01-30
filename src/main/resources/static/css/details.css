@@ -129,3 +129,34 @@
 /* Slightly increase space between sections */
 h5{margin-top:18px;margin-bottom:10px;color:var(--accent)}
 
+/* CA Publicité specific styles */
+.ca-badge{
+    display:inline-block;
+    background:linear-gradient(135deg,#fff7ed,#ffedd5);
+    color:#92400e;
+    border-radius:12px;
+    padding:6px 10px;
+    font-weight:700;
+    border:1px solid rgba(244,114,20,0.08);
+}
+
+.ca-cell{
+    font-weight:700;
+    color:#065f46;
+}
+
+.ca-total-card{
+    display:inline-block;
+    background:linear-gradient(135deg,#ecfeff,#e6fffa);
+    color:#065f46;
+    border-radius:12px;
+    padding:10px 14px;
+    border:1px solid rgba(6,95,70,0.08);
+    font-weight:700;
+}
+
+/* Small responsive tweak for CA display */
+@media (max-width:900px){
+    .ca-total-card{display:block;margin-top:10px}
+}
+

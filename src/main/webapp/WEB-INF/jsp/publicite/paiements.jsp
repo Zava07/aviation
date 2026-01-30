@@ -516,6 +516,10 @@
                                            class="btn-icon blue" title="Historique">
                                             <i class="fas fa-history"></i>
                                         </a>
+                                        <a href="${pageContext.request.contextPath}/publicites/paiements/bilan-vol/${bilan.societe.id}" 
+                                           class="btn-icon" style="background: #f5eef8; color: #9b59b6;" title="Bilan par Vol">
+                                            <i class="fas fa-plane"></i>
+                                        </a>
                                         <c:if test="${bilan.resteAPayer > 0}">
                                             <button type="button" class="btn-icon green" 
                                                     onclick="openPaymentForm(${bilan.societe.id}, '${bilan.societe.nomSociete}', ${bilan.resteAPayer})"
@@ -621,6 +625,7 @@
                             <th>Méthode</th>
                             <th>Caisse</th>
                             <th>Référence</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -646,11 +651,19 @@
                                 <td>
                                     <span class="reference-text">${not empty paiement.reference ? paiement.reference : '—'}</span>
                                 </td>
+                                <td>
+                                    <div class="actions-cell">
+                                        <a href="${pageContext.request.contextPath}/publicites/paiements/details/${paiement.id}" 
+                                           class="btn-icon blue" title="Voir la répartition">
+                                            <i class="fas fa-receipt"></i>
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty paiements}">
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="empty-state">
                                         <i class="fas fa-inbox"></i>
                                         <p>Aucun paiement enregistré</p>
